@@ -1,129 +1,250 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { supabase } from '../../lib/supabase'; // Import our new database helper!
 
-// Expanded dummy data for the market
-const marketProducts = [
-  { id: 1, name: "Graphite Urban Jacket", price: "$120", category: "Apparel", image: "Image" },
-  { id: 2, name: "Premium White Denim", price: "$90", category: "Apparel", image: "Image" },
-  { id: 3, name: "Cyber-Chic Neural Headset", price: "$350", category: "Tech", image: "Image" },
-  { id: 4, name: "Matte Black Smartwatch", price: "$250", category: "Tech", image: "Image" },
-  { id: 5, name: "Neon-Trimmed Sneakers", price: "$180", category: "Apparel", image: "Image" },
-  { id: 6, name: "Haptic Feedback Gloves", price: "$210", category: "Tech", image: "Image" },
-  { id: 7, name: "Titanium Aviators", price: "$150", category: "Accessories", image: "Image" },
-  { id: 8, name: "Minimalist Leather Backpack", price: "$290", category: "Accessories", image: "Image" },
-];
+const CATEGORIES = ["All", "MiNi Fan", "Stanley tumblers", "Prayer Mat", "Beauty products", "Tables", "Decoration"];
+
+// Define the shape of our product data
+type Product = {
+  id: number;
+  name: string;
+  price: number;
+  category: string;
+  tag: string | null;
+  rating: number;
+  reviews: number;
+  aiMatch: number;
+  stock: number;
+  description: string;
+  image: string;
+};
 
 export default function MarketPage() {
-  const [activeCategory, setActiveCategory] = useState('All');
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  
+  const [activeCategory, setActiveCategory] = useState("All");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState("featured");
 
-  // Simple filter logic
-  const filteredProducts = activeCategory === 'All' 
-    ? marketProducts 
-    : marketProducts.filter(p => p.category === activeCategory);
+  // Fetch real data from Supabase on load
+  useEffect(() => {
+    async function fetchProducts() {
+      try {
+        const { data, error } = await supabase
+          .from('products')
+          .select('*')
+          .order('id', { ascending: true });
+
+        if (error) throw error;
+        
+        if (data) {
+          setProducts(data);
+        }
+      } catch (error) {
+        console.error("Error fetching inventory:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchProducts();
+  }, []);
+
+  // Filter Logic
+  const filteredProducts = products.filter(product => {
+    const matchesCategory = activeCategory === "All" || product.category === activeCategory;
+    const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
+
+  // Sort Logic
+  const displayedProducts = [...filteredProducts].sort((a, b) => {
+    if (sortBy === "low") return a.price - b.price;
+    if (sortBy === "high") return b.price - a.price;
+    return b.aiMatch - a.aiMatch;
+  });
+
+  const getCategoryCount = (catName: string) => {
+    if (catName === "All") return products.length;
+    return products.filter(p => p.category === catName).length;
+  };
 
   return (
-    <div className="pt-10 pb-24 min-h-screen flex flex-col md:flex-row gap-8 relative z-10">
+    <div className="min-h-screen pb-24 pt-8">
       
-      {/* --- SIDEBAR FILTERS --- */}
-      <aside className="w-full md:w-64 flex-shrink-0 space-y-8">
-        <div className="bg-zinc-900/50 backdrop-blur-xl border border-white/10 rounded-2xl p-6 sticky top-32">
-          
-          <h2 className="text-white font-black uppercase tracking-widest text-sm mb-6 flex items-center gap-2">
-            <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
-            Categories
-          </h2>
-          
-          <div className="flex flex-col gap-3">
-            {['All', 'Apparel', 'Tech', 'Accessories'].map((cat) => (
-              <button 
-                key={cat}
-                onClick={() => setActiveCategory(cat)}
-                className={`text-left text-sm font-bold uppercase tracking-wider transition-colors ${
-                  activeCategory === cat 
-                    ? 'text-orange-400' 
-                    : 'text-zinc-500 hover:text-blue-400'
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
+      {/* --- MARKET HEADER --- */}
+      <div className="mb-12 border-b border-white/10 pb-8 flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div>
+          <div className="flex items-center gap-3 mb-4">
+            <span className="relative flex h-3 w-3">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span>
+            </span>
+            <span className="text-xs font-bold uppercase tracking-widest text-blue-400">Database Connected</span>
           </div>
-
-          <div className="mt-8 pt-8 border-t border-white/10">
-            <h2 className="text-white font-black uppercase tracking-widest text-sm mb-6 flex items-center gap-2">
-              <span className="w-2 h-2 bg-orange-500 rounded-full"></span>
-              Price Range
-            </h2>
-            <input type="range" className="w-full accent-blue-500" />
-            <div className="flex justify-between text-xs text-zinc-500 mt-2 font-bold">
-              <span>$0</span>
-              <span>$1000+</span>
-            </div>
-          </div>
-          
+          <h1 className="text-4xl md:text-6xl font-black text-white tracking-tight mb-2">
+            The <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-orange-500">Market</span>
+          </h1>
+          <p className="text-zinc-400 text-lg">Curated inventory powered by real-time cloud data.</p>
         </div>
-      </aside>
-
-      {/* --- PRODUCT GRID --- */}
-      <div className="flex-grow">
         
-        {/* Market Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-8 gap-4">
-          <div>
-            <h1 className="text-4xl md:text-5xl font-black text-white tracking-tighter">
-              The <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-orange-500">Market</span>
-            </h1>
-            <p className="text-zinc-400 mt-2 text-sm font-medium tracking-wide">Showing {filteredProducts.length} results for "{activeCategory}"</p>
-          </div>
-          
-          {/* Sort Dropdown */}
-          <select className="bg-zinc-900/80 border border-zinc-700 text-zinc-300 text-xs font-bold uppercase tracking-widest px-4 py-3 rounded-xl focus:outline-none focus:border-blue-500 appearance-none cursor-pointer">
-            <option>Sort: Featured</option>
-            <option>Price: Low to High</option>
-            <option>Price: High to Low</option>
-            <option>Newest Arrivals</option>
+        <div className="flex items-center gap-3">
+          <span className="text-sm font-medium text-zinc-500 uppercase tracking-widest">Sort:</span>
+          <select 
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            className="bg-zinc-900/80 border border-zinc-700 text-white text-sm rounded-xl py-2 px-4 focus:outline-none focus:border-blue-500 appearance-none cursor-pointer hover:bg-zinc-800 transition-colors"
+          >
+            <option value="featured">AI Recommended</option>
+            <option value="low">Price: Low to High</option>
+            <option value="high">Price: High to Low</option>
           </select>
         </div>
+      </div>
 
-        {/* The Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredProducts.map((product) => (
-            <div 
-              key={product.id} 
-              className="group relative bg-zinc-900/40 backdrop-blur-sm border border-zinc-800 rounded-2xl p-4 transition-all duration-300 hover:border-blue-500/40 hover:bg-zinc-900/80 overflow-hidden flex flex-col"
-            >
-              {/* Product Image */}
-              <div className="w-full h-64 bg-zinc-950 border border-white/5 rounded-xl mb-4 relative overflow-hidden flex items-center justify-center">
-                <span className="text-zinc-700 text-xs font-black uppercase tracking-widest group-hover:scale-110 transition-transform duration-500">{product.image}</span>
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-4">
-                  
-                  {/* ✨ Add to Cart Trigger */}
-                  <button 
-                    onClick={() => window.dispatchEvent(new Event('openCart'))}
-                    className="bg-blue-600 hover:bg-orange-500 text-white text-xs font-black uppercase tracking-widest px-6 py-3 rounded-full translate-y-4 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-[0_0_20px_rgba(37,99,235,0.4)]"
-                  >
-                    Quick Add
-                  </button>
-                  
-                </div>
-              </div>
-              
-              {/* Product Info */}
-              <div className="flex-grow flex flex-col justify-between space-y-2">
-                <div>
-                  <p className="text-[10px] text-orange-400 font-black uppercase tracking-widest mb-1">{product.category}</p>
-                  <Link href={`/market/${product.id}`}>
-                    <h3 className="text-lg font-bold text-zinc-100 group-hover:text-blue-400 transition-colors cursor-pointer">{product.name}</h3>
-                  </Link>
-                </div>
-                <p className="text-zinc-300 font-black">{product.price}</p>
+      <div className="flex flex-col lg:flex-row gap-10">
+        
+        {/* --- SIDEBAR --- */}
+        <aside className="w-full lg:w-64 shrink-0">
+          <div className="sticky top-32 space-y-8 bg-zinc-900/20 backdrop-blur-md border border-white/5 p-6 rounded-3xl">
+            <div className="relative">
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+              <input 
+                type="text" 
+                placeholder="Search products..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-black/50 border border-zinc-700/50 text-white text-sm rounded-xl py-3 pl-10 pr-4 focus:outline-none focus:border-blue-500 transition-colors placeholder:text-zinc-600 shadow-inner"
+              />
+            </div>
+
+            <div>
+              <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
+                Filters
+              </h3>
+              <div className="flex flex-col gap-1">
+                {CATEGORIES.map((category) => {
+                  const count = getCategoryCount(category);
+                  const isActive = activeCategory === category;
+                  return (
+                    <button
+                      key={category}
+                      onClick={() => setActiveCategory(category)}
+                      className={`group flex items-center justify-between text-left px-4 py-3 rounded-xl transition-all duration-300 text-sm font-medium ${
+                        isActive 
+                          ? "bg-blue-600/10 border border-blue-500/30 text-white shadow-[0_0_15px_rgba(37,99,235,0.1)]" 
+                          : "text-zinc-400 hover:text-white hover:bg-zinc-800/50 border border-transparent"
+                      }`}
+                    >
+                      <span>{category}</span>
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full ${isActive ? 'bg-blue-500 text-white' : 'bg-zinc-800 text-zinc-500 group-hover:bg-zinc-700'}`}>
+                        {count}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
-          ))}
-        </div>
-        
+            
+          </div>
+        </aside>
+
+        {/* --- PRODUCT GRID --- */}
+        <main className="flex-1">
+          {loading ? (
+            // Loading State (Sleek pulse effect while fetching from Supabase)
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+              {[1, 2, 3].map((skeleton) => (
+                <div key={skeleton} className="bg-black/40 border border-white/5 rounded-3xl h-96 animate-pulse p-6 flex flex-col justify-end">
+                  <div className="w-16 h-4 bg-zinc-800 rounded mb-2"></div>
+                  <div className="w-full h-6 bg-zinc-800 rounded mb-4"></div>
+                  <div className="w-24 h-6 bg-zinc-800 rounded"></div>
+                </div>
+              ))}
+            </div>
+          ) : displayedProducts.length === 0 ? (
+            <div className="bg-zinc-900/30 border border-zinc-800/50 rounded-3xl p-16 text-center backdrop-blur-sm">
+              <div className="w-16 h-16 mx-auto mb-4 bg-zinc-800 rounded-full flex items-center justify-center text-zinc-500">
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-2">Query Returned Zero Results</h3>
+              <p className="text-zinc-400 mb-6">No items match your current parameters.</p>
+              <button 
+                onClick={() => {setSearchQuery(""); setActiveCategory("All"); setSortBy("featured");}}
+                className="px-8 py-3 bg-white text-black hover:bg-blue-500 hover:text-white font-bold text-xs uppercase tracking-widest rounded-full transition-all"
+              >
+                Reset Parameters
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+              {displayedProducts.map((product) => (
+                <div 
+                  key={product.id} 
+                  className="group bg-black/40 backdrop-blur-md border border-white/5 rounded-3xl overflow-hidden flex flex-col transition-all duration-500 hover:border-orange-500/50 hover:shadow-[0_0_40px_rgba(249,115,22,0.15)] relative"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-orange-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
+
+                  {/* Image Area */}
+                  <div className="relative w-full h-64 bg-zinc-900 overflow-hidden flex items-center justify-center">
+                    
+                    {product.image && (
+                      <img src={product.image} alt={product.name} className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 group-hover:opacity-100 transition-all duration-500" />
+                    )}
+
+                    <div className="absolute top-4 left-4 z-10 flex flex-col gap-2">
+                      {product.tag && (
+                        <span className="px-3 py-1 bg-white text-black text-[10px] font-black uppercase tracking-widest rounded-full shadow-lg">
+                          {product.tag}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="absolute top-4 right-4 z-10 flex items-center gap-1 px-2 py-1 bg-black/60 backdrop-blur-md border border-white/10 rounded-lg">
+                      <svg className="w-3 h-3 text-blue-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                      <span className="text-[10px] font-bold text-white">{product.aiMatch}% Match</span>
+                    </div>
+                    
+                    <div className="absolute inset-0 bg-black/40 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                      <button 
+                        onClick={(e) => { e.preventDefault(); window.dispatchEvent(new Event('openCart')); }}
+                        className="translate-y-4 group-hover:translate-y-0 transition-all duration-300 px-6 py-3 bg-orange-500 text-white font-bold text-xs uppercase tracking-widest rounded-full hover:bg-orange-400 shadow-[0_0_20px_rgba(249,115,22,0.5)]"
+                      >
+                        Quick Add
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Details Area */}
+                  <div className="p-6 flex flex-col flex-1 relative z-10">
+                    <div className="flex justify-between items-start mb-2">
+                      <p className="text-[10px] text-blue-400 font-bold uppercase tracking-wider">{product.category}</p>
+                      
+                      <div className="flex items-center gap-1">
+                        <svg className="w-3 h-3 text-orange-500" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                        <span className="text-[10px] text-zinc-400">{product.rating} ({product.reviews})</span>
+                      </div>
+                    </div>
+                    
+                    <Link href={`/market/${product.id}`} className="block group/title">
+                      <h3 className="text-xl font-bold text-zinc-100 group-hover/title:text-orange-400 transition-colors line-clamp-2 leading-tight">
+                        {product.name}
+                      </h3>
+                    </Link>
+                    
+                    <div className="mt-auto pt-6 flex items-center justify-between">
+                      <p className="text-2xl font-light text-white tracking-tight">${product.price}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </main>
       </div>
     </div>
   );

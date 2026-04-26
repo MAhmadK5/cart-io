@@ -1,71 +1,106 @@
-"use client"; // Required for interactivity (toggling the menu)
+"use client";
 
-import { useState } from 'react';
 import Link from 'next/link';
+import { useState, useEffect } from 'react';
 
 export default function Header() {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Dynamic frosted glass effect on scroll
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   return (
-    <header className="fixed top-4 md:top-6 left-1/2 -translate-x-1/2 w-[95%] max-w-5xl z-50">
-      {/* Main Glass Bar */}
-      <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl px-6 md:px-8 py-4 flex justify-between items-center relative z-50">
+    <header className={`fixed top-0 left-0 w-full z-[100] transition-all duration-500 ${scrolled || mobileMenuOpen ? 'bg-zinc-950/90 backdrop-blur-xl border-b border-white/10 py-4 shadow-[0_10px_30px_rgba(0,0,0,0.5)]' : 'bg-transparent py-6'}`}>
+      <div className="max-w-6xl mx-auto px-6 flex items-center justify-between relative z-50">
         
-        {/* Logo Area */}
-        <Link 
-          href="/" 
-          className="text-xl md:text-2xl font-black tracking-tighter uppercase flex items-center gap-3"
-          onClick={() => setIsMobileMenuOpen(false)}
-        >
-          <span className="w-2 h-2 bg-orange-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(249,115,22,0.8)]"></span>
-          <div>
-            <span className="text-blue-500">Go</span>
-            <span className="text-orange-500">BAZAAR</span>
-          </div>
+        {/* --- EXACT COLOR LOGO --- */}
+        <Link href="/" className="flex items-center gap-2 group">
+          <img 
+            src="/gobaazaar.png" 
+            alt="GOBAAZAAR" 
+            /* Filter removed! Added a subtle white glass background so the dark blue is perfectly readable against the black website */
+            className="h-8 sm:h-10 w-auto  hover:scale-105 duration-300  backdrop-blur-md px-3 py-1.5 rounded-xl shadow-[0_0_15px_rgba(255,255,255,0.2)]"
+          />
         </Link>
 
-        {/* Desktop Navigation (Hidden on Mobile) */}
-        <nav className="hidden md:flex gap-8 text-xs font-bold text-zinc-400 uppercase tracking-widest">
-          <Link href="/" className="hover:text-blue-500 transition-colors">Home</Link>
-          <Link href="/about" className="hover:text-blue-500 transition-colors">About</Link>
-          <Link href="/market" className="hover:text-blue-500 transition-colors">Market</Link>
-          <Link href="/contact" className="hover:text-blue-500 transition-colors">Contact</Link>
+        {/* --- DESKTOP NAVIGATION (Easy, Customer-Friendly Words) --- */}
+        <nav className="hidden md:flex items-center gap-10">
+          <Link href="/" className="relative text-xs font-bold uppercase tracking-widest text-zinc-300 hover:text-white transition-colors group">
+            Home
+            <span className="absolute -bottom-2 left-0 w-0 h-0.5 bg-blue-500 transition-all duration-300 group-hover:w-full"></span>
+          </Link>
+          <Link href="/market" className="relative text-xs font-bold uppercase tracking-widest text-zinc-300 hover:text-white transition-colors group">
+            Shop
+            <span className="absolute -bottom-2 left-0 w-0 h-0.5 bg-orange-500 transition-all duration-300 group-hover:w-full"></span>
+          </Link>
+          <Link href="/market" className="relative text-xs font-bold uppercase tracking-widest text-zinc-300 hover:text-white transition-colors group">
+            Categories
+            <span className="absolute -bottom-2 left-0 w-0 h-0.5 bg-blue-500 transition-all duration-300 group-hover:w-full"></span>
+          </Link>
         </nav>
-{/* ✨ NEW: Cart Button */}
+
+        {/* --- RIGHT ACTIONS (Cart & Mobile Menu Toggle) --- */}
+        <div className="flex items-center gap-4">
+          
+          {/* Cart Button */}
           <button 
             onClick={() => window.dispatchEvent(new Event('openCart'))}
-            className="relative p-2 text-zinc-300 hover:text-orange-400 transition-colors"
+            className="relative flex items-center justify-center w-11 h-11 rounded-full bg-white/5 border border-white/10 text-white hover:bg-orange-500 hover:border-orange-400 transition-all duration-300 shadow-[0_0_15px_rgba(0,0,0,0.5)] group"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
-            </svg>
-            {/* Notification Dot */}
-            <span className="absolute top-1 right-1 w-2 h-2 bg-blue-500 rounded-full shadow-[0_0_5px_rgba(59,130,246,0.8)]"></span>
+            <svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
+            <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-blue-500 border border-zinc-950 rounded-full"></span>
           </button>
-        
-        {/* Mobile Hamburger Toggle (Hidden on Desktop) */}
-        <button 
-          className="md:hidden flex flex-col justify-center items-center w-8 h-8 space-y-1.5 focus:outline-none"
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          aria-label="Toggle Menu"
-        >
-          <span className={`block w-6 h-[2px] bg-zinc-300 rounded-full transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? 'rotate-45 translate-y-2' : ''}`}></span>
-          <span className={`block w-6 h-[2px] bg-zinc-300 rounded-full transition-opacity duration-300 ease-in-out ${isMobileMenuOpen ? 'opacity-0' : 'opacity-100'}`}></span>
-          <span className={`block w-6 h-[2px] bg-zinc-300 rounded-full transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? '-rotate-45 -translate-y-2' : ''}`}></span>
-        </button>
+
+          {/* Mobile Hamburger Button (Only visible on phones) */}
+          <button 
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="md:hidden flex flex-col justify-center items-center w-11 h-11 rounded-full bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-all"
+          >
+            {/* Animated Hamburger Lines */}
+            <span className={`w-4 h-0.5 bg-white transition-all duration-300 rounded-full ${mobileMenuOpen ? 'rotate-45 translate-y-1' : '-translate-y-1'}`}></span>
+            <span className={`w-4 h-0.5 bg-white transition-all duration-300 rounded-full ${mobileMenuOpen ? 'opacity-0' : 'opacity-100'}`}></span>
+            <span className={`w-4 h-0.5 bg-white transition-all duration-300 rounded-full ${mobileMenuOpen ? '-rotate-45 -translate-y-1.5' : 'translate-y-1'}`}></span>
+          </button>
+        </div>
+
       </div>
 
-      {/* Mobile Dropdown Menu */}
-      <div 
-        className={`md:hidden absolute top-full left-0 w-full mt-2 transition-all duration-300 ease-in-out origin-top ${
-          isMobileMenuOpen ? 'scale-y-100 opacity-100 visible' : 'scale-y-95 opacity-0 invisible'
-        }`}
-      >
-        <nav className="flex flex-col bg-zinc-900/95 backdrop-blur-2xl border border-white/10 rounded-2xl p-6 gap-6 text-sm font-bold text-zinc-300 uppercase tracking-widest shadow-2xl">
-          <Link href="/" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-blue-400 transition-colors">Home</Link>
-          <Link href="/about" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-blue-400 transition-colors">About</Link>
-          <Link href="/market" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-blue-400 transition-colors">Market</Link>
-          <Link href="/contact" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-blue-400 transition-colors">Contact</Link>
+      {/* --- MOBILE NAVIGATION DROPDOWN --- */}
+      <div className={`md:hidden absolute top-full left-0 w-full bg-zinc-950/95 backdrop-blur-2xl border-b border-white/10 transition-all duration-500 overflow-hidden ${mobileMenuOpen ? 'max-h-64 border-opacity-100' : 'max-h-0 border-opacity-0'}`}>
+        <nav className="flex flex-col px-8 py-6 space-y-6">
+          <Link 
+            href="/" 
+            onClick={() => setMobileMenuOpen(false)}
+            className="text-sm font-bold uppercase tracking-widest text-zinc-300 hover:text-white transition-colors flex items-center justify-between"
+          >
+            <span>Home</span>
+            <span className="text-blue-500">→</span>
+          </Link>
+          <div className="w-full h-px bg-white/5"></div>
+          <Link 
+            href="/market" 
+            onClick={() => setMobileMenuOpen(false)}
+            className="text-sm font-bold uppercase tracking-widest text-zinc-300 hover:text-white transition-colors flex items-center justify-between"
+          >
+            <span>Shop</span>
+            <span className="text-orange-500">→</span>
+          </Link>
+          <div className="w-full h-px bg-white/5"></div>
+          <Link 
+            href="/market" 
+            onClick={() => setMobileMenuOpen(false)}
+            className="text-sm font-bold uppercase tracking-widest text-zinc-300 hover:text-white transition-colors flex items-center justify-between"
+          >
+            <span>Categories</span>
+            <span className="text-blue-500">→</span>
+          </Link>
         </nav>
       </div>
     </header>

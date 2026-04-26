@@ -2,97 +2,147 @@
 
 import { useState, useEffect } from 'react';
 
+// Mock Cart Item Type
+type CartItem = {
+  id: number;
+  name: string;
+  price: number;
+  quantity: number;
+  category: string;
+};
+
 export default function Cart() {
   const [isOpen, setIsOpen] = useState(false);
+  
+  // We'll start with one item inside so you can see how it looks immediately!
+  const [cartItems, setCartItems] = useState<CartItem[]>([
+    { id: 3, name: "Matte Black Stanley 40oz", price: 55, quantity: 1, category: "Stanley tumblers" }
+  ]);
 
-  // Listen for the custom event from the Header to open the cart
+  // Listen for the 'openCart' event from anywhere in the app
   useEffect(() => {
     const handleOpen = () => setIsOpen(true);
     window.addEventListener('openCart', handleOpen);
     return () => window.removeEventListener('openCart', handleOpen);
   }, []);
 
+  const subtotal = cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+  const processingFee = 4.99; // Standard "Network Fee"
+  const total = subtotal + processingFee;
+
+  const removeItem = (id: number) => {
+    setCartItems(cartItems.filter(item => item.id !== id));
+  };
+
   return (
     <>
-      {/* Dark Overlay Background */}
+      {/* --- BACKDROP --- */}
       <div 
-        className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] transition-opacity duration-300 ${
-          isOpen ? 'opacity-100 visible' : 'opacity-0 invisible'
-        }`}
+        className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-[999] transition-opacity duration-500 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
         onClick={() => setIsOpen(false)}
       ></div>
 
-      {/* Slide-out Cart Sidebar */}
-      <div 
-        className={`fixed top-0 right-0 h-full w-full sm:w-[400px] bg-zinc-950/90 backdrop-blur-2xl border-l border-white/10 z-[70] shadow-[-20px_0_50px_rgba(0,0,0,0.5)] transform transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] flex flex-col ${
-          isOpen ? 'translate-x-0' : 'translate-x-full'
-        }`}
-      >
-        {/* Cart Header */}
-        <div className="flex justify-between items-center p-6 border-b border-white/10">
-          <h2 className="text-xl font-black text-white tracking-widest uppercase flex items-center gap-2">
-            Your Bag <span className="text-orange-500 text-sm">(2)</span>
-          </h2>
+      {/* --- CART SIDEBAR --- */}
+      <aside className={`fixed top-0 right-0 h-screen w-full sm:w-[450px] bg-zinc-950/90 backdrop-blur-2xl z-[1000] border-l border-white/10 transition-transform duration-700 ease-in-out flex flex-col ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+        
+        {/* Glow Accents */}
+        <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/10 blur-3xl pointer-events-none"></div>
+        <div className="absolute bottom-0 left-0 w-32 h-32 bg-blue-500/10 blur-3xl pointer-events-none"></div>
+
+        {/* Header */}
+        <div className="p-8 border-b border-white/5 flex items-center justify-between relative z-10">
+          <div>
+            <h2 className="text-xl font-black text-white tracking-tighter uppercase">Procurement Terminal</h2>
+            <p className="text-[10px] text-blue-400 font-bold uppercase tracking-widest mt-1">Status: Ready for Sync</p>
+          </div>
           <button 
             onClick={() => setIsOpen(false)}
-            className="text-zinc-400 hover:text-white transition-transform hover:rotate-90 duration-300 p-2"
+            className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center text-zinc-400 hover:text-white hover:border-white/30 transition-all"
           >
-            &#10005; {/* X Icon */}
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
           </button>
         </div>
 
-        {/* Cart Items (Dummy Data for now) */}
-        <div className="flex-grow p-6 overflow-y-auto space-y-6">
-          
-          {/* Item 1 */}
-          <div className="flex gap-4 group">
-            <div className="w-20 h-24 bg-zinc-900 border border-white/5 rounded-xl flex-shrink-0 relative overflow-hidden flex items-center justify-center">
-              <span className="text-[10px] text-zinc-600 uppercase tracking-widest">Image</span>
-              <div className="absolute inset-0 bg-gradient-to-tr from-blue-600/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-            </div>
-            <div className="flex flex-col justify-between w-full">
-              <div>
-                <h3 className="text-sm font-bold text-zinc-100 group-hover:text-blue-400 transition-colors">Cyber-Chic Neural Headset</h3>
-                <p className="text-xs text-zinc-500 mt-1">Matte Black / One Size</p>
+        {/* Items List */}
+        <div className="flex-1 overflow-y-auto p-8 space-y-6 relative z-10 custom-scrollbar">
+          {cartItems.length === 0 ? (
+            <div className="h-full flex flex-col items-center justify-center text-center opacity-50">
+              <div className="w-16 h-16 border-2 border-dashed border-zinc-700 rounded-full mb-4 flex items-center justify-center">
+                <svg className="w-6 h-6 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
               </div>
-              <div className="flex justify-between items-center mt-2">
-                <span className="text-sm font-bold text-zinc-300">$350</span>
-                <button className="text-xs text-zinc-600 hover:text-red-500 uppercase font-bold tracking-wider transition-colors">Remove</button>
-              </div>
+              <p className="text-sm font-bold uppercase tracking-widest text-zinc-500">Manifest Empty</p>
             </div>
-          </div>
-
-          {/* Item 2 */}
-          <div className="flex gap-4 group">
-            <div className="w-20 h-24 bg-zinc-900 border border-white/5 rounded-xl flex-shrink-0 relative overflow-hidden flex items-center justify-center">
-              <span className="text-[10px] text-zinc-600 uppercase tracking-widest">Image</span>
-              <div className="absolute inset-0 bg-gradient-to-tr from-orange-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-            </div>
-            <div className="flex flex-col justify-between w-full">
-              <div>
-                <h3 className="text-sm font-bold text-zinc-100 group-hover:text-orange-400 transition-colors">Premium White Denim</h3>
-                <p className="text-xs text-zinc-500 mt-1">White / 32x32</p>
+          ) : (
+            cartItems.map((item) => (
+              <div key={item.id} className="group relative bg-white/5 border border-white/5 p-4 rounded-2xl flex gap-4 transition-all hover:border-blue-500/30">
+                <div className="w-20 h-20 bg-zinc-900 rounded-xl flex-shrink-0 flex items-center justify-center border border-white/5">
+                  <span className="text-[8px] text-zinc-600 font-bold uppercase text-center">{item.category}</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-sm font-bold text-white truncate">{item.name}</h3>
+                  <p className="text-[10px] text-zinc-500 mb-2 uppercase font-bold tracking-widest">Qty: {item.quantity}</p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-light text-white">${item.price}</p>
+                    <button 
+                      onClick={() => removeItem(item.id)}
+                      className="text-[10px] font-black text-zinc-500 hover:text-orange-500 uppercase tracking-widest transition-colors"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
               </div>
-              <div className="flex justify-between items-center mt-2">
-                <span className="text-sm font-bold text-zinc-300">$90</span>
-                <button className="text-xs text-zinc-600 hover:text-red-500 uppercase font-bold tracking-wider transition-colors">Remove</button>
-              </div>
-            </div>
-          </div>
-          
+            ))
+          )}
         </div>
 
-        {/* Checkout Footer */}
-        <div className="p-6 border-t border-white/10 bg-black/50">
-          <div className="flex justify-between items-center mb-6">
-            <span className="text-sm text-zinc-400 uppercase tracking-widest">Subtotal</span>
-            <span className="text-xl font-black text-white">$440</span>
+        {/* Footer Summary */}
+        <div className="p-8 bg-zinc-900/50 border-t border-white/10 space-y-6 relative z-10">
+          <div className="space-y-2">
+            <div className="flex justify-between text-xs font-bold uppercase tracking-widest text-zinc-500">
+              <span>Subtotal</span>
+              <span className="text-white font-light">${subtotal.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between text-xs font-bold uppercase tracking-widest text-zinc-500">
+              <span>Network Fee</span>
+              <span className="text-white font-light">${processingFee.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between pt-4 border-t border-white/5">
+              <span className="text-lg font-black text-white uppercase tracking-tighter">Total Due</span>
+              <span className="text-lg font-black text-orange-400">${total.toFixed(2)}</span>
+            </div>
           </div>
-          <button className="w-full py-4 bg-blue-600 hover:bg-orange-500 text-white text-xs font-black uppercase tracking-[0.2em] rounded-xl transition-all hover:scale-[1.02] duration-300 shadow-[0_0_20px_rgba(37,99,235,0.3)] hover:shadow-[0_0_20px_rgba(249,115,22,0.5)]">
-            Proceed to Checkout
+
+          <button 
+            className="w-full py-5 bg-white text-black font-black text-xs uppercase tracking-[0.3em] rounded-2xl hover:bg-orange-500 hover:text-white transition-all shadow-[0_0_30px_rgba(255,255,255,0.1)] hover:shadow-[0_0_30px_rgba(249,115,22,0.4)] flex items-center justify-center gap-2 group"
+          >
+            <span>Proceed to Sync</span>
+            <span className="group-hover:translate-x-2 transition-transform duration-300">→</span>
           </button>
+          
+          <div className="flex items-center justify-center gap-2">
+            <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+            <span className="text-[8px] font-bold text-zinc-500 uppercase tracking-[0.2em]">Secure Node: Encrypted</span>
+          </div>
         </div>
-      </div>
+
+      </aside>
+
+      <style jsx global>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: rgba(255, 255, 255, 0.1);
+          border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: rgba(59, 130, 246, 0.5);
+        }
+      `}</style>
     </>
   );
 }

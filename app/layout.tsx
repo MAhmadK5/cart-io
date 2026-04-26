@@ -24,7 +24,7 @@ export default function RootLayout({
         
         <Header />
         
-        <main className="max-w-6xl mx-auto px-6 relative z-10 flex-grow w-full overflow-hidden">
+       <main className="max-w-6xl mx-auto px-6 relative z-10 flex-grow w-full">
           {children}
         </main>
 
