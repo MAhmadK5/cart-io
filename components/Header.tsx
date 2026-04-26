@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
+import Cart from '@/components/Cart';
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);

@@ -2,11 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { supabase } from '../../lib/supabase'; // Import our new database helper!
+import { supabase } from '../../lib/supabase'; // Fixed relative path
 
 const CATEGORIES = ["All", "MiNi Fan", "Stanley tumblers", "Prayer Mat", "Beauty products", "Tables", "Decoration"];
 
-// Define the shape of our product data
 type Product = {
   id: number;
   name: string;
@@ -29,7 +28,6 @@ export default function MarketPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("featured");
 
-  // Fetch real data from Supabase on load
   useEffect(() => {
     async function fetchProducts() {
       try {
@@ -39,28 +37,22 @@ export default function MarketPage() {
           .order('id', { ascending: true });
 
         if (error) throw error;
-        
-        if (data) {
-          setProducts(data);
-        }
+        if (data) setProducts(data);
       } catch (error) {
         console.error("Error fetching inventory:", error);
       } finally {
         setLoading(false);
       }
     }
-
     fetchProducts();
   }, []);
 
-  // Filter Logic
   const filteredProducts = products.filter(product => {
     const matchesCategory = activeCategory === "All" || product.category === activeCategory;
     const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCategory && matchesSearch;
   });
 
-  // Sort Logic
   const displayedProducts = [...filteredProducts].sort((a, b) => {
     if (sortBy === "low") return a.price - b.price;
     if (sortBy === "high") return b.price - a.price;
@@ -74,8 +66,6 @@ export default function MarketPage() {
 
   return (
     <div className="min-h-screen pb-24 pt-8">
-      
-      {/* --- MARKET HEADER --- */}
       <div className="mb-12 border-b border-white/10 pb-8 flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
           <div className="flex items-center gap-3 mb-4">
@@ -106,8 +96,6 @@ export default function MarketPage() {
       </div>
 
       <div className="flex flex-col lg:flex-row gap-10">
-        
-        {/* --- SIDEBAR --- */}
         <aside className="w-full lg:w-64 shrink-0">
           <div className="sticky top-32 space-y-8 bg-zinc-900/20 backdrop-blur-md border border-white/5 p-6 rounded-3xl">
             <div className="relative">
@@ -149,14 +137,11 @@ export default function MarketPage() {
                 })}
               </div>
             </div>
-            
           </div>
         </aside>
 
-        {/* --- PRODUCT GRID --- */}
         <main className="flex-1">
           {loading ? (
-            // Loading State (Sleek pulse effect while fetching from Supabase)
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
               {[1, 2, 3].map((skeleton) => (
                 <div key={skeleton} className="bg-black/40 border border-white/5 rounded-3xl h-96 animate-pulse p-6 flex flex-col justify-end">
@@ -189,9 +174,7 @@ export default function MarketPage() {
                 >
                   <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-orange-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
 
-                  {/* Image Area */}
                   <div className="relative w-full h-64 bg-zinc-900 overflow-hidden flex items-center justify-center">
-                    
                     {product.image && (
                       <img src={product.image} alt={product.name} className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 group-hover:opacity-100 transition-all duration-500" />
                     )}
@@ -219,11 +202,9 @@ export default function MarketPage() {
                     </div>
                   </div>
 
-                  {/* Details Area */}
                   <div className="p-6 flex flex-col flex-1 relative z-10">
                     <div className="flex justify-between items-start mb-2">
                       <p className="text-[10px] text-blue-400 font-bold uppercase tracking-wider">{product.category}</p>
-                      
                       <div className="flex items-center gap-1">
                         <svg className="w-3 h-3 text-orange-500" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
                         <span className="text-[10px] text-zinc-400">{product.rating} ({product.reviews})</span>
@@ -237,7 +218,8 @@ export default function MarketPage() {
                     </Link>
                     
                     <div className="mt-auto pt-6 flex items-center justify-between">
-                      <p className="text-2xl font-light text-white tracking-tight">${product.price}</p>
+                      {/* PKR Conversion Here */}
+                      <p className="text-2xl font-light text-white tracking-tight">Rs. {product.price.toLocaleString()}</p>
                     </div>
                   </div>
                 </div>

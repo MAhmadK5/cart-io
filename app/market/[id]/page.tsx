@@ -3,9 +3,9 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { supabase } from '../../../lib/supabase'; // Connected to your live database
+import { supabase } from '../../../lib/supabase';
+import { useCart } from '../../../context/CartContext'; // ✨ IMPORT THE BRAIN ✨
 
-// Define our product structure
 type Product = {
   id: number;
   name: string;
@@ -23,17 +23,17 @@ type Product = {
 export default function ProductDetails() {
   const params = useParams();
   
-  // Live Database States
+  // Connect to our global cart!
+  const { addToCart } = useCart();
+  
   const [product, setProduct] = useState<Product | null>(null);
   const [recommendations, setRecommendations] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // UI States
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState("overview"); 
   const [viewers, setViewers] = useState(12);
 
-  // Fake live network activity ticker
   useEffect(() => {
     const interval = setInterval(() => {
       setViewers(prev => Math.max(3, prev + Math.floor(Math.random() * 5) - 2));
@@ -41,25 +41,22 @@ export default function ProductDetails() {
     return () => clearInterval(interval);
   }, []);
 
-  // Fetch real data from Supabase based on the URL ID
   useEffect(() => {
     async function fetchProductData() {
       try {
-        // 1. Fetch the main product
         const { data: mainProduct, error: mainError } = await supabase
           .from('products')
           .select('*')
           .eq('id', params.id)
-          .single(); // Gets exactly one row
+          .single();
 
         if (mainError) throw mainError;
         if (mainProduct) setProduct(mainProduct);
 
-        // 2. Fetch 3 other products for the recommendations section
         const { data: recs, error: recsError } = await supabase
           .from('products')
           .select('*')
-          .neq('id', params.id) // Don't include the current product
+          .neq('id', params.id)
           .limit(3);
 
         if (!recsError && recs) setRecommendations(recs);
@@ -76,7 +73,20 @@ export default function ProductDetails() {
     }
   }, [params.id]);
 
-  // Loading State
+  // Handle Add to Cart Click
+  const handleAddToCart = () => {
+    if (product) {
+      addToCart({
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        image: product.image,
+        category: product.category,
+        quantity: quantity
+      });
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen pt-32 px-6 max-w-6xl mx-auto flex gap-12 animate-pulse">
@@ -91,7 +101,6 @@ export default function ProductDetails() {
     );
   }
 
-  // Not Found State
   if (!product) {
     return (
       <div className="min-h-[70vh] flex flex-col items-center justify-center text-center px-6">
@@ -108,8 +117,6 @@ export default function ProductDetails() {
 
   return (
     <div className="min-h-screen pb-24 pt-8 animate-fade-in">
-      
-      {/* Header Row: Breadcrumbs & Network Status */}
       <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-zinc-500">
           <Link href="/" className="hover:text-blue-400 transition-colors">Home</Link>
@@ -131,16 +138,11 @@ export default function ProductDetails() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 mb-24">
-        
-        {/* --- LEFT COLUMN: MEDIA GALLERY --- */}
         <div className="space-y-4">
           <div className="w-full h-[400px] md:h-[550px] bg-black border border-white/10 rounded-[2rem] overflow-hidden flex items-center justify-center relative group shadow-[0_0_50px_rgba(0,0,0,0.5)]">
-            
-            {/* Live Database Image */}
             {product.image && (
               <img src={product.image} alt={product.name} className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-all duration-700" />
             )}
-
             <div className="absolute inset-0 bg-gradient-to-tr from-blue-600/10 to-orange-500/10 z-0 mix-blend-overlay"></div>
             <div className="absolute top-0 left-0 w-full h-[2px] bg-blue-400/50 shadow-[0_0_15px_rgba(59,130,246,1)] z-20 animate-[scan_3s_ease-in-out_infinite]"></div>
             
@@ -165,16 +167,13 @@ export default function ProductDetails() {
           <div className="grid grid-cols-4 gap-4">
             {[1, 2, 3, 4].map((thumb) => (
               <div key={thumb} className={`h-20 sm:h-24 bg-zinc-900/40 border rounded-2xl overflow-hidden cursor-pointer transition-all ${thumb === 1 ? 'border-blue-500 shadow-[0_0_15px_rgba(37,99,235,0.2)]' : 'border-white/5 hover:border-zinc-500 hover:bg-zinc-800'}`}>
-                {/* Reusing main image for thumbnails to simulate a gallery */}
                 <img src={product.image} className="w-full h-full object-cover opacity-50 hover:opacity-100 transition-opacity" alt="thumb" />
               </div>
             ))}
           </div>
         </div>
 
-        {/* --- RIGHT COLUMN: PRODUCT DATA --- */}
         <div className="flex flex-col justify-center">
-          
           <div className="flex items-center justify-between mb-4">
             <p className="text-sm text-blue-400 font-bold uppercase tracking-widest">{product.category}</p>
             <div className="flex items-center gap-1 px-3 py-1 bg-blue-500/10 border border-blue-500/30 rounded-full shadow-[0_0_10px_rgba(37,99,235,0.2)]">
@@ -191,7 +190,7 @@ export default function ProductDetails() {
           </h1>
 
           <div className="flex items-center gap-4 mb-6">
-            <h2 className="text-3xl font-light text-white">${product.price}</h2>
+            <h2 className="text-3xl font-light text-white">Rs. {product.price.toLocaleString()}</h2>
             <div className="w-px h-8 bg-white/10"></div>
             <div className="flex items-center gap-1">
               <svg className="w-4 h-4 text-orange-500" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
@@ -200,7 +199,6 @@ export default function ProductDetails() {
             </div>
           </div>
 
-          {/* Live Stock Indicator */}
           <div className="mb-8 p-4 bg-zinc-900/50 border border-white/5 rounded-xl">
             <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest mb-2">
               <span className={`${product.stock < 10 ? 'text-orange-500 animate-pulse' : 'text-zinc-400'}`}>
@@ -227,13 +225,14 @@ export default function ProductDetails() {
               <button onClick={() => setQuantity(quantity + 1)} className="text-zinc-400 hover:text-white p-2 transition-colors">+</button>
             </div>
 
+            {/* ✨ THIS NOW ACTUALLY ADDS THE ITEM TO THE CART ✨ */}
             <button 
-              onClick={() => window.dispatchEvent(new Event('openCart'))}
+              onClick={handleAddToCart}
               className="flex-1 bg-white text-black hover:bg-blue-600 hover:text-white px-8 py-4 rounded-xl font-black text-xs uppercase tracking-[0.2em] transition-all shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:shadow-[0_0_20px_rgba(37,99,235,0.4)] flex items-center justify-center gap-3"
             >
               <span>Add to Cart</span>
               <span>•</span>
-              <span>${(product.price * quantity).toFixed(2)}</span>
+              <span>Rs. {(product.price * quantity).toLocaleString()}</span>
             </button>
           </div>
 
@@ -275,7 +274,6 @@ export default function ProductDetails() {
         </div>
       </div>
 
-      {/* --- NEURAL NETWORK RECOMMENDATIONS --- */}
       <div className="border-t border-white/5 pt-16">
         <div className="flex items-end justify-between mb-8">
           <div>
@@ -296,7 +294,7 @@ export default function ProductDetails() {
               <div className="p-4 flex flex-col gap-1">
                 <p className="text-[10px] text-blue-400 font-bold uppercase tracking-wider">{rec.category}</p>
                 <h4 className="font-bold text-zinc-100 group-hover:text-white transition-colors truncate">{rec.name}</h4>
-                <p className="text-zinc-400 text-sm">${rec.price}</p>
+                <p className="text-zinc-400 text-sm">Rs. {rec.price.toLocaleString()}</p>
               </div>
             </Link>
           ))}
