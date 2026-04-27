@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react'; // 1. Added Suspense
 import Link from 'next/link';
-// ✨ Added this to read the URL! ✨
 import { useSearchParams } from 'next/navigation'; 
 import { supabase } from '../../lib/supabase'; 
 
@@ -22,20 +21,17 @@ type Product = {
   image: string;
 };
 
-export default function MarketPage() {
-  // Read the URL
+// 2. Created a separate component for the Market logic
+function MarketContent() {
   const searchParams = useSearchParams();
   const urlCategory = searchParams.get('category');
 
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  
-  // Set the default category to whatever is in the URL, or "All" if the URL is empty
   const [activeCategory, setActiveCategory] = useState(urlCategory || "All");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("featured");
 
-  // If the URL changes while we are ALREADY on the page, update the category!
   useEffect(() => {
     if (urlCategory && CATEGORIES.includes(urlCategory)) {
       setActiveCategory(urlCategory);
@@ -80,6 +76,7 @@ export default function MarketPage() {
 
   return (
     <div className="min-h-screen pb-24 pt-8">
+      {/* --- Rest of your original UI code starts here --- */}
       <div className="mb-12 border-b border-white/10 pb-8 flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
           <div className="flex items-center gap-3 mb-4">
@@ -242,5 +239,14 @@ export default function MarketPage() {
         </main>
       </div>
     </div>
+  );
+}
+
+// 3. The Main Page Export now wraps the content in Suspense
+export default function MarketPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen pt-20 text-center text-zinc-500 uppercase tracking-widest font-black text-xs">Initializing Market Node...</div>}>
+      <MarketContent />
+    </Suspense>
   );
 }
