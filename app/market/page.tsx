@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { supabase } from '../../lib/supabase'; // Fixed relative path
+// ✨ Added this to read the URL! ✨
+import { useSearchParams } from 'next/navigation'; 
+import { supabase } from '../../lib/supabase'; 
 
 const CATEGORIES = ["All", "MiNi Fan", "Stanley tumblers", "Prayer Mat", "Beauty products", "Tables", "Decoration"];
 
@@ -21,12 +23,24 @@ type Product = {
 };
 
 export default function MarketPage() {
+  // Read the URL
+  const searchParams = useSearchParams();
+  const urlCategory = searchParams.get('category');
+
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   
-  const [activeCategory, setActiveCategory] = useState("All");
+  // Set the default category to whatever is in the URL, or "All" if the URL is empty
+  const [activeCategory, setActiveCategory] = useState(urlCategory || "All");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("featured");
+
+  // If the URL changes while we are ALREADY on the page, update the category!
+  useEffect(() => {
+    if (urlCategory && CATEGORIES.includes(urlCategory)) {
+      setActiveCategory(urlCategory);
+    }
+  }, [urlCategory]);
 
   useEffect(() => {
     async function fetchProducts() {
@@ -218,7 +232,6 @@ export default function MarketPage() {
                     </Link>
                     
                     <div className="mt-auto pt-6 flex items-center justify-between">
-                      {/* PKR Conversion Here */}
                       <p className="text-2xl font-light text-white tracking-tight">Rs. {product.price.toLocaleString()}</p>
                     </div>
                   </div>

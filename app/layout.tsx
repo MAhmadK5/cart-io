@@ -5,8 +5,9 @@ import './globals.css';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import AiChat from '../components/AiChat';
+import WhatsAppButton from '../components/WhatsAppButton';// ✨ IMPORT THIS ✨
 import Cart from '../components/Cart';
-import { CartProvider } from '../context/CartContext'; // ✨ IMPORT THE BRAIN ✨
+import { CartProvider } from '../context/CartContext';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -24,7 +25,6 @@ export default function RootLayout({
     <html lang="en" className="dark">
       <body className={`${inter.className} bg-zinc-950 text-zinc-100 selection:bg-blue-500/30 selection:text-white flex flex-col min-h-screen`}>
         
-        {/* Wrap EVERYTHING in the CartProvider */}
         <CartProvider>
           <Header />
           
@@ -33,7 +33,8 @@ export default function RootLayout({
           </main>
 
           <Footer />
-          <AiChat />
+          <WhatsAppButton /> {/* ✨ HUMAN SUPPORT (Left) ✨ */}
+          <AiChat />         {/* ✨ AI ASSISTANT (Right) ✨ */}
           <Cart />
         </CartProvider>
         
