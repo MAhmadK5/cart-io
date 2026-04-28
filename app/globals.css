@@ -13,6 +13,7 @@
   background-size: 400% 400%;
   animation: moveGradient 15s ease infinite;
 }
+
 /* Infinite Marquee Scroll */
 @keyframes scroll {
   0% { transform: translateX(0); }
@@ -23,4 +24,55 @@
   animation: scroll 20s linear infinite;
   display: flex;
   width: max-content;
+}
+
+/* =========================================
+   UI POLISH: STEALTH SCROLLBARS
+   ========================================= */
+
+/* Global Website Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #000000;
+  border-left: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #27272a; /* Tailwind zinc-800 */
+  border-radius: 20px;
+  border: 2px solid #000000; /* Adds padding so it doesn't touch the edges */
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #3f3f46; /* Tailwind zinc-700 */
+}
+
+/* Micro-Scrollbar for components (Admin Dash / Chat) */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+  border: none;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #3f3f46; /* Tailwind zinc-700 */
+  border-radius: 10px;
+  border: none;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #3b82f6; /* Tailwind blue-500 glow effect */
+}
+
+/* Smooth scrolling for anchor links */
+html {
+  scroll-behavior: smooth;
 }

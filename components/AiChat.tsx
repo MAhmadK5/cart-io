@@ -18,7 +18,16 @@ export default function AiChat() {
   ]);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+// ... existing states ...
 
+  // ✨ ADD THIS NEW LISTENER ✨
+  useEffect(() => {
+    const openChatBox = () => setIsOpen(true);
+    window.addEventListener('openAiChat', openChatBox);
+    return () => window.removeEventListener('openAiChat', openChatBox);
+  }, []);
+
+  // ... existing useEffect for scrolling ...
   // Auto-scroll to the newest message
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
