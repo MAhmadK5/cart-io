@@ -1,31 +1,33 @@
-import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
+import { NextResponse } from 'next/server';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Initialize with a fallback string to prevent the "Missing API key" build crash
+const resend = new Resend(process.env.RESEND_API_KEY || 're_placeholder');
 
-export async function POST(request: Request) {
+export async function POST(req: Request) {
+  // Extra safety check: stop if key is actually missing when someone tries to send an email
+  if (!process.env.RESEND_API_KEY) {
+    console.error("CRITICAL: RESEND_API_KEY is not defined in environment variables.");
+    return NextResponse.json({ error: 'Mail server configuration missing' }, { status: 500 });
+  }
+
   try {
-    const { customerName, customerEmail, orderId, totalAmount } = await request.json();
+    const { customerName, customerEmail, orderId, totalAmount } = await req.json();
 
     const data = await resend.emails.send({
-      from: 'GOBAAZAAR <onboarding@resend.dev>', // Resend gives you this free testing email!
-      to: [customerEmail],
-      subject: `Order Confirmed: ${orderId} - GOBAAZAAR`,
+      from: 'CART IO <onboarding@resend.dev>', // Update this once you verify your domain!
+      to: customerEmail,
+      subject: `Order Confirmed: ${orderId}`,
       html: `
-        <div style="font-family: sans-serif; max-w: 600px; margin: 0 auto; background-color: #09090b; color: #f4f4f5; padding: 40px; border-radius: 16px;">
-          <h1 style="color: #3b82f6; text-transform: uppercase; letter-spacing: 2px;">Asset Acquisition Confirmed</h1>
-          <p style="font-size: 16px;">Hello ${customerName},</p>
-          <p style="font-size: 16px;">Your order <strong>${orderId}</strong> has been securely logged into our network.</p>
-          
-          <div style="background-color: #18181b; padding: 20px; border-radius: 8px; margin: 24px 0;">
-            <p style="margin: 0; font-size: 12px; text-transform: uppercase; color: #a1a1aa;">Total Value</p>
-            <p style="margin: 0; font-size: 24px; font-weight: bold;">Rs. ${totalAmount.toLocaleString()}</p>
-          </div>
-
-          <p style="color: #a1a1aa; font-size: 14px;">Our dispatch node will notify you once your premium assets are in transit.</p>
-          <p style="font-size: 12px; color: #71717a; margin-top: 40px;">GOBAAZAAR | Smart Shopping</p>
+        <div style="font-family: sans-serif; max-width: 600px; margin: auto;">
+          <h1 style="text-transform: uppercase; letter-spacing: 2px;">Order Confirmed</h1>
+          <p>Hello ${customerName},</p>
+          <p>Your order <strong>${orderId}</strong> for <strong>Rs. ${totalAmount.toLocaleString()}</strong> has been received and is being processed.</p>
+          <p>Thank you for choosing <strong>CART IO</strong> for ultimate luxury.</p>
+          <hr />
+          <p style="font-size: 10px; color: #666;">© ${new Date().getFullYear()} CART IO. All rights reserved.</p>
         </div>
-      `,
+      `
     });
 
     return NextResponse.json(data);
