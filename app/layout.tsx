@@ -1,20 +1,25 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+// ✨ CHANGED TO STANDARD ALUMNI SANS FOR READABILITY AND THICKNESS ✨
+import { Alumni_Sans } from 'next/font/google'; 
 import './globals.css';
 
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import AiChat from '../components/AiChat';
-import WhatsAppButton from '../components/WhatsAppButton';// ✨ IMPORT THIS ✨
 import Cart from '../components/Cart';
 import { CartProvider } from '../context/CartContext';
+import WhatsAppButton from '../components/WhatsAppButton';
 import BackButton from '../components/BackButton';
 
-const inter = Inter({ subsets: ['latin'] });
+// Initialize Alumni Sans with bold weights for readability!
+const alumniSans = Alumni_Sans({ 
+  weight: ['400'],
+  subsets: ['latin'] 
+});
 
 export const metadata: Metadata = {
-  title: 'GoBAZAAR | Smart Shopping',
-  description: 'Premium products, powered by intelligent AI support.',
+  title: 'CART IO | Ultimate Luxury',
+  description: 'Elevating your everyday essentials. A curated premium lifestyle brand.',
 };
 
 export default function RootLayout({
@@ -23,24 +28,25 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark">
-      <body className={`${inter.className} bg-zinc-950 text-zinc-100 selection:bg-blue-500/30 selection:text-white flex flex-col min-h-screen`}>
+    <html lang="en">
+      {/* Increased base text size, added font-semibold (weight 600) and tracking-wider */}
+      <body className={`${alumniSans.className} font-semibold tracking-wider bg-zinc-950 min-h-[100dvh] text-zinc-100 selection:bg-purple-500/30 selection:text-white flex flex-col overflow-x-hidden w-full text-xl md:text-2xl`}>
         
-{/* Wrap EVERYTHING in the CartProvider */}
         <CartProvider>
           <Header />
-          <BackButton /> {/* ✨ ADD THIS RIGHT HERE ✨ */}
+          <BackButton />
           
-          <main className="max-w-6xl mx-auto px-6 flex-grow w-full pt-32 overflow-x-hidden">
+          <main className="flex-grow pt-32">
             {children}
           </main>
-
+          
           <Footer />
-          <WhatsAppButton /> 
-          <AiChat />         
           <Cart />
+          
+          <WhatsAppButton />
+          <AiChat />
         </CartProvider>
-        
+
       </body>
     </html>
   );

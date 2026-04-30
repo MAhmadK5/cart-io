@@ -32,18 +32,20 @@ export default function CheckoutPage() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  // --- EMPTY CART SCREEN ---
   if (cartItems.length === 0 && !orderSuccess) {
     return (
-      <div className="min-h-[80vh] flex flex-col items-center justify-center text-center px-6">
-        <div className="w-24 h-24 bg-zinc-900 rounded-full flex items-center justify-center border border-zinc-800 mb-6">
-          <svg className="w-12 h-12 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
+      <>
+        <div className="fixed top-0 left-0 w-full h-screen -z-30 animate-live-bg opacity-30"></div>
+        <div className="fixed inset-0 bg-gradient-to-b from-zinc-950/80 via-transparent to-zinc-950 -z-20"></div>
+        <div className="min-h-[85vh] flex flex-col items-center justify-center text-center px-6 relative z-10">
+          <h1 className="text-5xl md:text-7xl font-black text-white mb-6 uppercase tracking-tighter">Your Cart is Empty</h1>
+          <p className="text-2xl md:text-3xl text-zinc-400 mb-12 font-light tracking-wide">Please add some items to your collection before proceeding to checkout.</p>
+          <Link href="/market" className="px-12 py-6 bg-white text-black rounded-none font-black uppercase tracking-[0.3em] text-base hover:bg-purple-600 hover:text-white transition-all duration-300 shadow-2xl">
+            Return to Shop
+          </Link>
         </div>
-        <h1 className="text-4xl font-black text-white mb-4 uppercase tracking-widest">Cart is Empty</h1>
-        <p className="text-zinc-400 mb-8 max-w-md">You need to add items to your cart before you can proceed to secure checkout.</p>
-        <Link href="/market" className="px-8 py-4 bg-white text-black rounded-xl font-black uppercase tracking-widest text-xs hover:bg-blue-500 hover:text-white transition-all shadow-[0_0_20px_rgba(255,255,255,0.1)]">
-          Return to Market
-        </Link>
-      </div>
+      </>
     );
   }
 
@@ -52,7 +54,7 @@ export default function CheckoutPage() {
     setIsProcessing(true);
 
     try {
-      const newOrderId = "GBZ-" + Math.random().toString(36).substring(2, 8).toUpperCase();
+      const newOrderId = "CIO-" + Math.random().toString(36).substring(2, 8).toUpperCase();
       const customerName = `${formData.firstName} ${formData.lastName}`.trim();
       
       const { error } = await supabase
@@ -77,6 +79,22 @@ export default function CheckoutPage() {
 
       if (error) throw error;
 
+      // Trigger the automated email receipt
+      try {
+        await fetch('/api/send-receipt', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            customerName: customerName,
+            customerEmail: formData.email,
+            orderId: newOrderId,
+            totalAmount: total, 
+          }),
+        });
+      } catch (emailError) {
+        console.error("Email failed to send, but order was placed.", emailError);
+      }
+
       setCompletedOrder({
         id: newOrderId,
         name: customerName,
@@ -100,313 +118,306 @@ export default function CheckoutPage() {
     }
   };
 
-  // --- SUCCESS SCREEN WITH RECEIPT ---
+  // --- SUCCESS SCREEN WITH DIGITAL RECEIPT ---
   if (orderSuccess && completedOrder) {
     const waNumber = "923196514249";
-    const waMessage = encodeURIComponent(`Hello GOBAAZAAR! 🚀\n\nI just placed an order on your website.\n\n*Order ID:* ${completedOrder.id}\n*Name:* ${completedOrder.name}\n*Total:* Rs. ${completedOrder.total.toLocaleString()}\n\nPlease confirm my order!`);
+    const waMessage = encodeURIComponent(`Hello CART IO! 🚀\n\nI just placed an order on your website.\n\n*Order ID:* ${completedOrder.id}\n*Name:* ${completedOrder.name}\n*Total:* Rs. ${completedOrder.total.toLocaleString()}\n\nPlease confirm my order!`);
     const waLink = `https://wa.me/${waNumber}?text=${waMessage}`;
 
     return (
-      <div className="min-h-screen pt-32 pb-24 px-4 flex items-center justify-center animate-fade-in print:pt-0 print:bg-black">
-        <div className="max-w-2xl w-full">
-          
-          {/* Header (Hidden in Print) */}
-          <div className="text-center mb-10 print:hidden">
-            <div className="w-20 h-20 bg-green-500/10 border border-green-500/30 rounded-full flex items-center justify-center mx-auto mb-6 shadow-[0_0_30px_rgba(34,197,94,0.2)]">
-              <svg className="w-10 h-10 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
-            </div>
-            <h1 className="text-3xl md:text-4xl font-black text-white mb-2 uppercase tracking-widest">Order Confirmed</h1>
-            <p className="text-zinc-400">Your premium assets are being prepared for deployment.</p>
-          </div>
-
-          {/* Digital Receipt (This is what prints) */}
-          <div className="bg-zinc-900/40 backdrop-blur-md border border-white/10 rounded-[2rem] overflow-hidden shadow-2xl mb-8 print:border-none print:shadow-none print:bg-black print:text-white">
+      <>
+        <div className="fixed top-0 left-0 w-full h-screen -z-30 animate-live-bg opacity-30 print:hidden"></div>
+        <div className="fixed inset-0 bg-gradient-to-b from-zinc-950/90 via-transparent to-zinc-950 -z-20 print:hidden"></div>
+        
+        <div className="min-h-screen pt-32 pb-24 px-4 flex items-center justify-center animate-fade-in relative z-10 print:pt-0 print:bg-white print:text-black">
+          <div className="max-w-3xl w-full">
             
-            {/* GOBAAZAAR Logo for Print only */}
-            <div className="hidden print:flex items-center justify-center py-6 border-b border-white/10">
-              <h2 className="text-2xl font-black tracking-widest uppercase">GOBAAZAAR</h2>
+            {/* Header (Hidden in Print) */}
+            <div className="text-center mb-16 print:hidden">
+              <h1 className="text-6xl md:text-8xl font-black text-white mb-4 uppercase tracking-tighter">Order Confirmed</h1>
+              <p className="text-2xl text-zinc-400 font-light tracking-wide">Your items are being prepared for delivery.</p>
             </div>
 
-            <div className="bg-black/50 p-6 md:p-8 border-b border-white/5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <div>
-                <p className="text-[10px] text-zinc-500 uppercase tracking-widest mb-1">Order Identifier</p>
-                <p className="text-2xl font-mono font-bold text-white tracking-wider">{completedOrder.id}</p>
+            {/* Digital Receipt (This is what prints) */}
+            <div className="bg-zinc-950/60 backdrop-blur-2xl border border-white/10 p-8 md:p-16 shadow-2xl mb-12 print:border-none print:shadow-none print:bg-white print:text-black">
+              
+              {/* CART IO Logo for Print only */}
+              <div className="hidden print:flex items-center justify-center pb-10 border-b border-black">
+                <h2 className="text-5xl font-black tracking-tighter uppercase">CART IO</h2>
               </div>
-              <div className="text-left sm:text-right">
-                <p className="text-[10px] text-zinc-500 uppercase tracking-widest mb-1">Status</p>
-                <div className="flex items-center gap-2 px-3 py-1 bg-green-500/10 border border-green-500/30 rounded-full">
-                  <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse print:hidden"></span>
-                  <span className="text-[10px] font-bold text-green-400 uppercase tracking-widest">Processing</span>
+
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6 border-b border-white/10 print:border-black pb-8 mb-8">
+                <div>
+                  <p className="text-sm text-zinc-500 uppercase tracking-[0.3em] mb-2 print:text-gray-500 font-bold">Order Number</p>
+                  <p className="text-4xl md:text-5xl font-black text-white tracking-tighter print:text-black">{completedOrder.id}</p>
+                </div>
+                <div className="text-left sm:text-right">
+                  <p className="text-sm text-zinc-500 uppercase tracking-[0.3em] mb-2 print:text-gray-500 font-bold">Status</p>
+                  <div className="flex items-center gap-3">
+                    <span className="w-3 h-3 rounded-full bg-purple-500 animate-pulse print:hidden"></span>
+                    <span className="text-lg font-black text-purple-400 uppercase tracking-widest print:text-black">Processing</span>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="p-6 md:p-8 space-y-8">
-              {/* Items Ledger WITH IMAGES */}
-              <div>
-                <h3 className="text-xs font-black text-zinc-500 uppercase tracking-[0.2em] border-b border-white/5 pb-3 mb-6">Asset Ledger</h3>
-                <div className="space-y-6">
-                  {completedOrder.items.map((item: any, index: number) => (
-                    <div key={index} className="flex justify-between items-center gap-4">
-                      <div className="flex items-center gap-4">
-                        {/* 🖼️ Product Image Thumbnail */}
-                        <div className="w-14 h-14 bg-black rounded-xl overflow-hidden relative border border-zinc-800 shrink-0">
-                          <img src={item.image} alt={item.name} className="absolute inset-0 w-full h-full object-cover opacity-90" />
+              <div className="space-y-12">
+                {/* Items Ledger WITH IMAGES */}
+                <div>
+                  <h3 className="text-lg font-black text-zinc-500 uppercase tracking-[0.3em] mb-8 print:text-gray-500">Order Details</h3>
+                  <div className="space-y-8">
+                    {completedOrder.items.map((item: any, index: number) => (
+                      <div key={index} className="flex justify-between items-center gap-6">
+                        <div className="flex items-center gap-6">
+                          <div className="w-20 h-20 bg-black flex items-center justify-center shrink-0 print:hidden border border-white/5">
+                            <img src={item.image} alt={item.name} className="w-full h-full object-contain p-2" />
+                          </div>
+                          <div>
+                            <p className="text-xl md:text-2xl font-bold text-white print:text-black line-clamp-1">{item.name}</p>
+                            <p className="text-sm text-zinc-500 uppercase tracking-[0.2em] mt-1 print:text-gray-500">Quantity: {item.quantity}</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-sm font-bold text-zinc-200 line-clamp-1">{item.name}</p>
-                          <p className="text-[10px] text-zinc-500 uppercase tracking-widest mt-1">Qty: {item.quantity}</p>
-                        </div>
+                        <p className="text-xl md:text-2xl font-bold text-white print:text-black">Rs. {(item.price * item.quantity).toLocaleString()}</p>
                       </div>
-                      <p className="text-sm font-mono text-white">Rs. {(item.price * item.quantity).toLocaleString()}</p>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
 
-              {/* Totals Breakdown */}
-              <div className="border-t border-dashed border-zinc-700 pt-6 space-y-3">
-                <div className="flex justify-between text-sm text-zinc-400">
-                  <span>Subtotal</span>
-                  <span className="font-mono">Rs. {completedOrder.subtotal.toLocaleString()}</span>
+                {/* Totals Breakdown */}
+                <div className="border-t border-white/10 print:border-black pt-8 space-y-4">
+                  <div className="flex justify-between text-xl text-zinc-400 print:text-gray-600 font-light tracking-wide">
+                    <span>Subtotal</span>
+                    <span>Rs. {completedOrder.subtotal.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between text-xl text-zinc-400 print:text-gray-600 font-light tracking-wide">
+                    <span>Shipping Fee</span>
+                    <span>Rs. {completedOrder.shipping.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between items-end pt-6 mt-4">
+                    <span className="text-lg font-black text-zinc-500 uppercase tracking-[0.3em] print:text-gray-500">Total Amount</span>
+                    <span className="text-5xl md:text-6xl font-black text-white print:text-black tracking-tighter">Rs. {completedOrder.total.toLocaleString()}</span>
+                  </div>
                 </div>
-                <div className="flex justify-between text-sm text-zinc-400">
-                  <span>Shipping</span>
-                  <span className="font-mono">Rs. {completedOrder.shipping.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between items-center pt-4 border-t border-white/5 mt-4">
-                  <span className="text-sm font-black text-white uppercase tracking-widest">Total Amount</span>
-                  <span className="text-2xl font-black text-orange-400 font-mono">Rs. {completedOrder.total.toLocaleString()}</span>
-                </div>
-              </div>
 
-              {/* Logistics Summary */}
-              <div className="bg-black/50 rounded-2xl p-6 grid grid-cols-1 md:grid-cols-2 gap-6 border border-white/5">
-                <div>
-                  <p className="text-[10px] text-zinc-500 uppercase tracking-widest mb-2 font-bold">Delivery Protocol</p>
-                  <p className="text-sm text-zinc-300 font-medium">{completedOrder.name}</p>
-                  <p className="text-sm text-zinc-500 mt-1">{completedOrder.phone}</p>
-                  <p className="text-sm text-zinc-500 mt-1">{completedOrder.address}</p>
-                </div>
-                <div>
-                  <p className="text-[10px] text-zinc-500 uppercase tracking-widest mb-2 font-bold">Payment Method</p>
-                  <p className="text-sm text-white font-medium uppercase tracking-wider">{completedOrder.payment === 'cod' ? 'Cash on Delivery' : 'Credit Card'}</p>
+                {/* Logistics Summary */}
+                <div className="bg-white/5 print:bg-gray-50 p-8 grid grid-cols-1 md:grid-cols-2 gap-10 border border-white/5">
+                  <div>
+                    <p className="text-sm text-zinc-500 uppercase tracking-[0.3em] mb-4 font-black print:text-gray-500">Customer Details</p>
+                    <p className="text-xl text-white print:text-black font-bold uppercase tracking-widest mb-1">{completedOrder.name}</p>
+                    <p className="text-lg text-zinc-400 print:text-gray-600 font-light tracking-wide mb-1">{completedOrder.phone}</p>
+                    <p className="text-lg text-zinc-400 print:text-gray-600 font-light tracking-wide">{completedOrder.address}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-zinc-500 uppercase tracking-[0.3em] mb-4 font-black print:text-gray-500">Payment Method</p>
+                    <p className="text-xl text-purple-400 print:text-black font-bold uppercase tracking-widest">{completedOrder.payment === 'cod' ? 'Cash on Delivery' : 'Credit Card'}</p>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Action Buttons (Hidden when generating PDF) */}
-          <div className="flex flex-col sm:flex-row gap-4 print:hidden">
+            {/* Action Buttons (Hidden when generating PDF) */}
+            <div className="flex flex-col sm:flex-row gap-6 print:hidden">
+              <button 
+                onClick={() => window.print()}
+                className="flex-1 py-6 md:py-8 bg-transparent text-white font-black text-sm uppercase tracking-[0.3em] rounded-none hover:bg-white hover:text-black transition-all flex items-center justify-center gap-4 border border-white"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                Save Receipt
+              </button>
+
+              <a 
+                href={waLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 py-6 md:py-8 bg-purple-600 text-white font-black text-sm uppercase tracking-[0.3em] rounded-none hover:bg-purple-500 transition-all flex items-center justify-center gap-4"
+              >
+                WhatsApp Us
+                <span className="text-2xl leading-none">→</span>
+              </a>
+            </div>
             
-            {/* Download Receipt Button */}
-            <button 
-              onClick={() => window.print()}
-              className="flex-1 py-4 bg-zinc-800 text-white font-black text-xs uppercase tracking-[0.1em] rounded-2xl hover:bg-zinc-700 transition-all flex items-center justify-center gap-3 shadow-[0_0_20px_rgba(255,255,255,0.05)] border border-zinc-700"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-              Save Receipt
-            </button>
+            <div className="mt-10 print:hidden">
+              <Link 
+                href="/market" 
+                className="w-full py-6 text-zinc-500 font-bold text-sm md:text-base uppercase tracking-[0.3em] hover:text-white transition-all flex items-center justify-center text-center"
+              >
+                Continue Shopping
+              </Link>
+            </div>
 
-            {/* WhatsApp Notify */}
-            <a 
-              href={waLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex-1 py-4 bg-[#25D366] text-zinc-950 font-black text-xs uppercase tracking-[0.1em] rounded-2xl hover:bg-[#20bd5a] transition-all flex items-center justify-center gap-3 shadow-[0_0_20px_rgba(37,211,102,0.2)]"
-            >
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 00-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" /></svg>
-              WhatsApp Us
-            </a>
           </div>
-          
-          <div className="mt-4 print:hidden">
-            <Link 
-              href="/market" 
-              className="w-full py-4 bg-transparent border border-zinc-800 text-zinc-400 font-black text-xs uppercase tracking-[0.2em] rounded-2xl hover:bg-zinc-900 hover:text-white transition-all flex items-center justify-center text-center"
-            >
-              Continue Shopping
-            </Link>
-          </div>
-
         </div>
-      </div>
+      </>
     );
   }
 
-  // --- CHECKOUT SCREEN ---
+  // --- MAIN CHECKOUT SCREEN ---
   return (
-    <div className="min-h-screen pb-24 pt-12 md:pt-20 px-4 animate-fade-in">
-      <div className="max-w-6xl mx-auto">
-        
-        <div className="mb-10 text-center md:text-left flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight mb-2">Secure Checkout</h1>
-            <p className="text-zinc-400">Complete your order to receive your premium assets.</p>
-          </div>
-          <div className="flex items-center justify-center md:justify-end gap-2 px-4 py-2 bg-green-500/10 border border-green-500/30 rounded-full w-fit mx-auto md:mx-0">
-            <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
-            <span className="text-[10px] font-bold text-green-500 uppercase tracking-widest">256-Bit SSL Encrypted</span>
-          </div>
-        </div>
+    <>
+      {/* ✨ THE LUXURY ANIMATED BACKGROUND ✨ */}
+      <div className="fixed top-0 left-0 w-full h-screen -z-30 animate-live-bg opacity-30"></div>
+      <div className="fixed inset-0 bg-gradient-to-b from-zinc-950/90 via-transparent to-zinc-950 -z-20"></div>
 
-        <form onSubmit={handlePlaceOrder} className="flex flex-col lg:flex-row gap-12">
+      <div className="min-h-screen pb-32 pt-24 md:pt-32 px-4 sm:px-8 relative z-10 animate-fade-in">
+        <div className="max-w-7xl mx-auto">
           
-          <div className="w-full lg:w-3/5 space-y-10">
-            
-            <section className="bg-zinc-900/40 backdrop-blur-md border border-white/5 p-6 md:p-8 rounded-3xl">
-              <h2 className="text-lg font-bold text-white mb-6 uppercase tracking-widest flex items-center gap-3">
-                <span className="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs">1</span>
-                Contact Information
-              </h2>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">Email Address</label>
-                  <input required name="email" value={formData.email} onChange={handleInputChange} type="email" placeholder="you@example.com" className="w-full bg-black/50 border border-zinc-800 text-white rounded-xl py-3 px-4 focus:outline-none focus:border-blue-500 transition-colors" />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">Phone Number</label>
-                  <div className="flex">
-                    <span className="bg-zinc-800 border-y border-l border-zinc-800 text-zinc-400 rounded-l-xl py-3 px-4 flex items-center text-sm">+92</span>
-                    <input required name="phone" value={formData.phone} onChange={handleInputChange} type="tel" placeholder="300 1234567" className="w-full bg-black/50 border border-zinc-800 text-white rounded-r-xl py-3 px-4 focus:outline-none focus:border-blue-500 transition-colors" />
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            <section className="bg-zinc-900/40 backdrop-blur-md border border-white/5 p-6 md:p-8 rounded-3xl">
-              <h2 className="text-lg font-bold text-white mb-6 uppercase tracking-widest flex items-center gap-3">
-                <span className="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs">2</span>
-                Shipping Address
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="md:col-span-1">
-                  <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">First Name</label>
-                  <input required name="firstName" value={formData.firstName} onChange={handleInputChange} type="text" placeholder="Ali" className="w-full bg-black/50 border border-zinc-800 text-white rounded-xl py-3 px-4 focus:outline-none focus:border-blue-500 transition-colors" />
-                </div>
-                <div className="md:col-span-1">
-                  <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">Last Name</label>
-                  <input required name="lastName" value={formData.lastName} onChange={handleInputChange} type="text" placeholder="Khan" className="w-full bg-black/50 border border-zinc-800 text-white rounded-xl py-3 px-4 focus:outline-none focus:border-blue-500 transition-colors" />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">Full Address</label>
-                  <input required name="address" value={formData.address} onChange={handleInputChange} type="text" placeholder="House 123, Street 4, Sector F-8" className="w-full bg-black/50 border border-zinc-800 text-white rounded-xl py-3 px-4 focus:outline-none focus:border-blue-500 transition-colors" />
-                </div>
-                <div className="md:col-span-1">
-                  <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">City</label>
-                  <input required name="city" value={formData.city} onChange={handleInputChange} type="text" placeholder="Islamabad" className="w-full bg-black/50 border border-zinc-800 text-white rounded-xl py-3 px-4 focus:outline-none focus:border-blue-500 transition-colors" />
-                </div>
-                <div className="md:col-span-1">
-                  <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">Postal Code</label>
-                  <input name="postalCode" value={formData.postalCode} onChange={handleInputChange} type="text" placeholder="44000" className="w-full bg-black/50 border border-zinc-800 text-white rounded-xl py-3 px-4 focus:outline-none focus:border-blue-500 transition-colors" />
-                </div>
-              </div>
-            </section>
-
-            <section className="bg-zinc-900/40 backdrop-blur-md border border-white/5 p-6 md:p-8 rounded-3xl">
-              <h2 className="text-lg font-bold text-white mb-6 uppercase tracking-widest flex items-center gap-3">
-                <span className="w-6 h-6 rounded-full bg-orange-500 text-white flex items-center justify-center text-xs">3</span>
-                Payment Options
-              </h2>
-              <div className="space-y-4">
-                
-                <label className={`block cursor-pointer border rounded-xl p-4 transition-all duration-300 ${paymentMethod === 'cod' ? 'bg-orange-500/10 border-orange-500 shadow-[0_0_15px_rgba(249,115,22,0.1)]' : 'bg-black/50 border-zinc-800 hover:border-zinc-600'}`}>
-                  <div className="flex items-center gap-4">
-                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${paymentMethod === 'cod' ? 'border-orange-500' : 'border-zinc-600'}`}>
-                      {paymentMethod === 'cod' && <div className="w-2.5 h-2.5 bg-orange-500 rounded-full"></div>}
-                    </div>
-                    <div>
-                      <h4 className="text-white font-bold">Cash on Delivery (COD)</h4>
-                      <p className="text-xs text-zinc-500 mt-1">Pay when you receive your order at your doorstep.</p>
-                    </div>
-                  </div>
-                  <input type="radio" name="payment" value="cod" className="hidden" checked={paymentMethod === 'cod'} onChange={() => setPaymentMethod('cod')} />
-                </label>
-
-                <label className={`block cursor-pointer border rounded-xl p-4 transition-all duration-300 ${paymentMethod === 'card' ? 'bg-blue-500/10 border-blue-500 shadow-[0_0_15px_rgba(37,99,235,0.1)]' : 'bg-black/50 border-zinc-800 hover:border-zinc-600'}`}>
-                  <div className="flex items-center gap-4">
-                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${paymentMethod === 'card' ? 'border-blue-500' : 'border-zinc-600'}`}>
-                      {paymentMethod === 'card' && <div className="w-2.5 h-2.5 bg-blue-500 rounded-full"></div>}
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex justify-between items-center">
-                        <h4 className="text-white font-bold">Credit / Debit Card</h4>
-                        <div className="flex gap-2">
-                          <div className="w-8 h-5 bg-zinc-800 rounded flex items-center justify-center text-[8px] font-bold text-white">VISA</div>
-                          <div className="w-8 h-5 bg-zinc-800 rounded flex items-center justify-center text-[8px] font-bold text-white">MC</div>
-                        </div>
-                      </div>
-                      <p className="text-xs text-zinc-500 mt-1">Secure payment via PayFast / Stripe.</p>
-                    </div>
-                  </div>
-                  <input type="radio" name="payment" value="card" className="hidden" checked={paymentMethod === 'card'} onChange={() => setPaymentMethod('card')} />
-                </label>
-
-              </div>
-            </section>
-          </div>
-
-          <div className="w-full lg:w-2/5">
-            <div className="sticky top-32 bg-black border border-white/10 rounded-3xl p-6 md:p-8 shadow-[0_0_40px_rgba(0,0,0,0.5)]">
-              <h2 className="text-xl font-black text-white mb-6 uppercase tracking-widest border-b border-white/5 pb-4">Order Summary</h2>
-              
-              <div className="space-y-4 mb-8 max-h-64 overflow-y-auto custom-scrollbar pr-2">
-                {cartItems.map((item) => (
-                  <div key={item.id} className="flex items-center gap-4">
-                    <div className="w-16 h-16 bg-zinc-900 rounded-xl overflow-hidden relative border border-zinc-800 flex-shrink-0">
-                      <img src={item.image} alt={item.name} className="absolute inset-0 w-full h-full object-cover opacity-80" />
-                      <span className="absolute -top-2 -right-2 w-5 h-5 bg-zinc-800 text-white text-[10px] font-bold rounded-full flex items-center justify-center border border-zinc-700 z-10">{item.quantity}</span>
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="text-sm font-bold text-white truncate">{item.name}</h4>
-                      <p className="text-xs text-zinc-500 uppercase tracking-widest mt-1">Qty: {item.quantity}</p>
-                    </div>
-                    <p className="text-sm font-bold text-white">Rs. {(item.price * item.quantity).toLocaleString()}</p>
-                  </div>
-                ))}
-              </div>
-
-              <div className="space-y-3 border-t border-white/5 pt-6 mb-6">
-                <div className="flex justify-between text-sm text-zinc-400">
-                  <span>Subtotal</span>
-                  <span className="text-white">Rs. {subtotal.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between text-sm text-zinc-400">
-                  <span>Shipping (Nationwide)</span>
-                  <span className="text-white">Rs. {shipping.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between items-center pt-4 border-t border-white/5 mt-4">
-                  <span className="text-lg font-black text-white uppercase tracking-widest">Total</span>
-                  <span className="text-2xl font-black text-orange-400">Rs. {total.toLocaleString()}</span>
-                </div>
-              </div>
-
-              <button 
-                type="submit"
-                disabled={isProcessing}
-                className={`w-full py-5 font-black text-xs uppercase tracking-[0.2em] rounded-2xl transition-all shadow-[0_0_20px_rgba(255,255,255,0.1)] flex items-center justify-center gap-3 group ${isProcessing ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed' : 'bg-white text-black hover:bg-orange-500 hover:text-white hover:shadow-[0_0_30px_rgba(249,115,22,0.4)]'}`}
-              >
-                {isProcessing ? (
-                  <>
-                    <svg className="animate-spin h-5 w-5 text-zinc-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                    <span>Processing...</span>
-                  </>
-                ) : (
-                  <>
-                    <span>Confirm & Place Order</span>
-                    <span className="group-hover:translate-x-1 transition-transform">→</span>
-                  </>
-                )}
-              </button>
-              
-              <p className="text-[10px] text-zinc-500 text-center mt-4 uppercase tracking-widest leading-relaxed">
-                By placing this order, you agree to GOBAAZAAR's <br/> Terms of Service and Privacy Policy.
-              </p>
+          <div className="mb-16 md:mb-24 flex flex-col items-start gap-4">
+            <h1 className="text-6xl md:text-8xl font-black text-white tracking-tighter uppercase leading-none">Secure Checkout</h1>
+            <div className="flex items-center gap-3">
+              <span className="w-3 h-3 bg-purple-500 rounded-full animate-pulse"></span>
+              <span className="text-base md:text-lg font-bold text-purple-400 uppercase tracking-[0.3em]">256-Bit SSL Encrypted</span>
             </div>
           </div>
 
-        </form>
+          <form onSubmit={handlePlaceOrder} className="flex flex-col lg:flex-row gap-16 lg:gap-24">
+            
+            {/* LEFT: MINIMALIST FORM */}
+            <div className="w-full lg:w-3/5 space-y-20">
+              
+              <section>
+                <div className="flex items-center gap-6 mb-12 border-b border-white/10 pb-6">
+                  <span className="text-sm font-black text-purple-500 uppercase tracking-[0.4em]">Step 01</span>
+                  <h2 className="text-3xl md:text-4xl font-black text-white uppercase tracking-tight">Contact Information</h2>
+                </div>
+                <div className="space-y-10">
+                  <div>
+                    <input required name="email" value={formData.email} onChange={handleInputChange} type="email" placeholder="Email Address" className="w-full bg-transparent border-b border-white/20 text-white text-xl md:text-2xl py-5 focus:outline-none focus:border-purple-500 transition-colors placeholder:text-zinc-600 font-light tracking-wide rounded-none" />
+                  </div>
+                  <div className="flex items-end">
+                    <span className="text-zinc-500 text-xl md:text-2xl py-5 pr-6 border-b border-white/20 font-light">+92</span>
+                    <input required name="phone" value={formData.phone} onChange={handleInputChange} type="tel" placeholder="Mobile Number" className="w-full bg-transparent border-b border-white/20 text-white text-xl md:text-2xl py-5 focus:outline-none focus:border-purple-500 transition-colors placeholder:text-zinc-600 font-light tracking-wide rounded-none" />
+                  </div>
+                </div>
+              </section>
+
+              <section>
+                <div className="flex items-center gap-6 mb-12 border-b border-white/10 pb-6">
+                  <span className="text-sm font-black text-purple-500 uppercase tracking-[0.4em]">Step 02</span>
+                  <h2 className="text-3xl md:text-4xl font-black text-white uppercase tracking-tight">Delivery Address</h2>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-10">
+                  <div className="md:col-span-1">
+                    <input required name="firstName" value={formData.firstName} onChange={handleInputChange} type="text" placeholder="First Name" className="w-full bg-transparent border-b border-white/20 text-white text-xl md:text-2xl py-5 focus:outline-none focus:border-purple-500 transition-colors placeholder:text-zinc-600 font-light tracking-wide rounded-none" />
+                  </div>
+                  <div className="md:col-span-1">
+                    <input required name="lastName" value={formData.lastName} onChange={handleInputChange} type="text" placeholder="Last Name" className="w-full bg-transparent border-b border-white/20 text-white text-xl md:text-2xl py-5 focus:outline-none focus:border-purple-500 transition-colors placeholder:text-zinc-600 font-light tracking-wide rounded-none" />
+                  </div>
+                  <div className="md:col-span-2">
+                    <input required name="address" value={formData.address} onChange={handleInputChange} type="text" placeholder="Full Street Address" className="w-full bg-transparent border-b border-white/20 text-white text-xl md:text-2xl py-5 focus:outline-none focus:border-purple-500 transition-colors placeholder:text-zinc-600 font-light tracking-wide rounded-none" />
+                  </div>
+                  <div className="md:col-span-1">
+                    <input required name="city" value={formData.city} onChange={handleInputChange} type="text" placeholder="City" className="w-full bg-transparent border-b border-white/20 text-white text-xl md:text-2xl py-5 focus:outline-none focus:border-purple-500 transition-colors placeholder:text-zinc-600 font-light tracking-wide rounded-none" />
+                  </div>
+                  <div className="md:col-span-1">
+                    <input name="postalCode" value={formData.postalCode} onChange={handleInputChange} type="text" placeholder="Postal Code (Optional)" className="w-full bg-transparent border-b border-white/20 text-white text-xl md:text-2xl py-5 focus:outline-none focus:border-purple-500 transition-colors placeholder:text-zinc-600 font-light tracking-wide rounded-none" />
+                  </div>
+                </div>
+              </section>
+
+              <section>
+                <div className="flex items-center gap-6 mb-12 border-b border-white/10 pb-6">
+                  <span className="text-sm font-black text-purple-500 uppercase tracking-[0.4em]">Step 03</span>
+                  <h2 className="text-3xl md:text-4xl font-black text-white uppercase tracking-tight">Payment Method</h2>
+                </div>
+                <div className="space-y-8">
+                  
+                  <label className={`block cursor-pointer border p-8 transition-all duration-300 rounded-none ${paymentMethod === 'cod' ? 'bg-purple-500/10 border-purple-500' : 'bg-transparent border-white/10 hover:border-white/30'}`}>
+                    <div className="flex items-center gap-8">
+                      <div className={`w-8 h-8 rounded-full border flex items-center justify-center shrink-0 ${paymentMethod === 'cod' ? 'border-purple-500' : 'border-zinc-600'}`}>
+                        {paymentMethod === 'cod' && <div className="w-4 h-4 bg-purple-500 rounded-full"></div>}
+                      </div>
+                      <div>
+                        <h4 className="text-2xl font-bold text-white uppercase tracking-widest">Cash on Delivery</h4>
+                        <p className="text-lg text-zinc-500 font-light tracking-wide mt-2">Pay when your order arrives at your door.</p>
+                      </div>
+                    </div>
+                    <input type="radio" name="payment" value="cod" className="hidden" checked={paymentMethod === 'cod'} onChange={() => setPaymentMethod('cod')} />
+                  </label>
+
+                  <label className={`block cursor-pointer border p-8 transition-all duration-300 rounded-none ${paymentMethod === 'card' ? 'bg-white/10 border-white' : 'bg-transparent border-white/10 hover:border-white/30'}`}>
+                    <div className="flex items-center gap-8">
+                      <div className={`w-8 h-8 rounded-full border flex items-center justify-center shrink-0 ${paymentMethod === 'card' ? 'border-white' : 'border-zinc-600'}`}>
+                        {paymentMethod === 'card' && <div className="w-4 h-4 bg-white rounded-full"></div>}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex justify-between items-center">
+                          <h4 className="text-2xl font-bold text-white uppercase tracking-widest">Credit Card</h4>
+                          <div className="flex gap-4">
+                            <span className="text-xs font-black text-zinc-400 uppercase tracking-[0.2em]">Visa</span>
+                            <span className="text-xs font-black text-zinc-400 uppercase tracking-[0.2em]">Mastercard</span>
+                          </div>
+                        </div>
+                        <p className="text-lg text-zinc-500 font-light tracking-wide mt-2">Secure digital payment via external gateway.</p>
+                      </div>
+                    </div>
+                    <input type="radio" name="payment" value="card" className="hidden" checked={paymentMethod === 'card'} onChange={() => setPaymentMethod('card')} />
+                  </label>
+
+                </div>
+              </section>
+            </div>
+
+            {/* RIGHT: EDITORIAL ORDER SUMMARY */}
+            <div className="w-full lg:w-2/5">
+              <div className="sticky top-32 bg-zinc-950/60 backdrop-blur-2xl border border-white/10 p-10 md:p-14 shadow-2xl">
+                <h2 className="text-3xl font-black text-white mb-12 uppercase tracking-tighter border-b border-white/10 pb-8">Order Summary</h2>
+                
+                <div className="space-y-8 mb-12 max-h-96 overflow-y-auto custom-scrollbar pr-6">
+                  {cartItems.map((item) => (
+                    <div key={item.id} className="flex items-center gap-8">
+                      <div className="w-24 h-24 bg-black flex items-center justify-center flex-shrink-0 relative border border-white/5">
+                        <img src={item.image} alt={item.name} className="w-full h-full object-contain p-3 opacity-90" />
+                        <span className="absolute -top-3 -right-3 w-8 h-8 bg-white text-black text-xs font-black rounded-full flex items-center justify-center z-10 shadow-lg">{item.quantity}</span>
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="text-xl md:text-2xl font-bold text-white uppercase tracking-tight line-clamp-2 mb-2">{item.name}</h4>
+                        <p className="text-xl font-light text-zinc-300">Rs. {(item.price * item.quantity).toLocaleString()}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="space-y-6 border-t border-white/10 pt-10 mb-12">
+                  <div className="flex justify-between text-xl text-zinc-400 font-light tracking-wide">
+                    <span>Subtotal</span>
+                    <span className="text-white">Rs. {subtotal.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between text-xl text-zinc-400 font-light tracking-wide">
+                    <span>Delivery Fee</span>
+                    <span className="text-white">Rs. {shipping.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between items-end pt-8 mt-4">
+                    <span className="text-sm font-black text-zinc-500 uppercase tracking-[0.3em]">Total Amount</span>
+                    <span className="text-5xl font-black text-white tracking-tighter">Rs. {total.toLocaleString()}</span>
+                  </div>
+                </div>
+
+                <button 
+                  type="submit"
+                  disabled={isProcessing}
+                  className={`w-full py-8 font-black text-sm md:text-base uppercase tracking-[0.3em] transition-all flex items-center justify-center gap-6 group rounded-none ${isProcessing ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed' : 'bg-white text-black hover:bg-purple-600 hover:text-white'}`}
+                >
+                  {isProcessing ? (
+                    <>
+                      <span className="w-6 h-6 border-2 border-zinc-500 border-t-transparent rounded-full animate-spin"></span>
+                      <span>Processing...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Confirm & Place Order</span>
+                      <span className="group-hover:translate-x-3 transition-transform text-2xl leading-none">→</span>
+                    </>
+                  )}
+                </button>
+                
+                <p className="text-xs text-zinc-500 text-center mt-8 uppercase tracking-[0.2em] leading-relaxed">
+                  By confirming this order, you accept <br/> CART IO's Terms of Service and Privacy Policy.
+                </p>
+              </div>
+            </div>
+
+          </form>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

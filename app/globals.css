@@ -1,5 +1,6 @@
 @import "tailwindcss";
 
+
 /* --- Fluid Color Changing Background --- */
 @keyframes moveGradient {
   0% { background-position: 0% 50%; }
@@ -8,8 +9,8 @@
 }
 
 .animate-live-bg {
-  /* A dark mix of deep zinc, GoBAZAAR blue, and subtle orange */
-  background: linear-gradient(-45deg, #09090b, #1e3a8a, #09090b, #9a3412, #09090b);
+  /* A dark mix of deep zinc and Cartio Luxury Purples */
+  background: linear-gradient(-45deg, #09090b, #4c1d95, #09090b, #3b0764, #09090b);
   background-size: 400% 400%;
   animation: moveGradient 15s ease infinite;
 }
@@ -52,6 +53,7 @@
 }
 
 /* Micro-Scrollbar for components (Admin Dash / Chat) */
+/* Micro-Scrollbar for components (Admin Dash / Chat) */
 .custom-scrollbar::-webkit-scrollbar {
   width: 5px;
   height: 5px;
@@ -69,9 +71,8 @@
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #3b82f6; /* Tailwind blue-500 glow effect */
+  background: #9333ea; /* ✨ UPDATED: Tailwind purple-600 glow effect */
 }
-
 /* Smooth scrolling for anchor links */
 html {
   scroll-behavior: smooth;
