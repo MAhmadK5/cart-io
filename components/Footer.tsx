@@ -181,7 +181,7 @@ export default function Footer() {
         <div className="flex flex-col md:flex-row items-center justify-between pt-8 gap-6">
           <div className="flex flex-col items-center md:items-start gap-2">
             <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest">
-  © {new Date().getFullYear()} CART IO. All rights reserved.
+  © {new Date().getFullYear()} CARTIO. All rights reserved.
 </p>
             <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">
               Developed by <span className="text-white">AHMAD KHALID</span> |{' '}

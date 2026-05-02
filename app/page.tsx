@@ -114,7 +114,7 @@ export default function Home() {
       <div className="flex flex-col items-center justify-center min-h-[90vh] text-center relative z-10 pb-10 w-full overflow-hidden px-4 mt-16 md:mt-0">
         <div className="mb-6 md:mb-8 flex items-center gap-2 md:gap-3 px-4 md:px-6 py-1.5 md:py-2 bg-black/30 backdrop-blur-md border border-white/5 rounded-full">
           <span className="w-1.5 h-1.5 md:w-2 md:h-2 bg-purple-500 rounded-full animate-pulse"></span>
-          <span className="text-[10px] md:text-sm font-bold uppercase tracking-[0.2em] text-zinc-300">Global Delivery Available</span>
+          <span className="text-[10px] md:text-sm font-bold uppercase tracking-[0.2em] text-zinc-300">Nationwide Delivery Available</span>
         </div>
 
         <img 
@@ -128,13 +128,14 @@ export default function Home() {
         </h1>
         
         <p className="text-sm sm:text-base md:text-2xl text-zinc-400 max-w-2xl font-semibold tracking-wide leading-relaxed mb-8 md:mb-12 px-4">
-          Elevate your lifestyle with a curated collection of modern essentials. Designed for those who demand excellence.
+          Elevate your lifestyle with a curated collection of modern essentials. Designed for those who demand excellence. <br /> 
+          -Pakistan's 1st Ai-Powered E-Commerce Website
         </p>
         
         <div className="flex flex-col sm:flex-row gap-4 md:gap-6 w-full sm:w-auto px-6 sm:px-0">
           <Link href="/market" className="w-full sm:w-auto">
             <button className="w-full sm:w-auto px-8 py-4 md:px-12 md:py-5 bg-white text-black text-xs md:text-base font-black uppercase tracking-[0.2em] rounded-none hover:bg-zinc-200 transition-all duration-300 flex items-center justify-center gap-3 group">
-              <span>Enter Boutique</span>
+              <span>Enter SHOP</span>
               <span className="group-hover:translate-x-2 transition-transform">→</span>
             </button>
           </Link>

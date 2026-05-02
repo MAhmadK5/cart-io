@@ -8,15 +8,16 @@ const faqs = [
     category: "Orders & Shipping",
     questions: [
       { q: "How long does delivery take?", a: "Standard delivery across Pakistan takes 3-5 business days. Premium rapid-node delivery (where available) takes 24-48 hours." },
-      { q: "Do you offer Cash on Delivery (COD)?", a: "Yes, we offer Cash on Delivery nationwide for all orders under Rs. 50,000 to ensure maximum trust and convenience." },
-      { q: "Can I change my shipping address?", a: "You can update your shipping address within 12 hours of placing the order by contacting our Support Desk via WhatsApp." }
+      { q: "Is there a Delivery Fee ?", a: "YES- (TCS) charges Rupees 250 for a single delivery...But the delivery charges are complementary, 'If the order amount is above Rupees 2500'" },
+      { q: "Do you offer Cash on Delivery (COD)?", a: "Yes, we offer Cash on Delivery nationwide for all orders under Rs. 20,000 to ensure maximum trust and convenience." },
+      { q: "Can I change my shipping address?", a: "You can update your shipping address within 12 hours of placing the order by contacting our Support Desk via WhatsApp (Preferred) or EMAIL." }
     ]
   },
   {
     category: "Products & Tech",
     questions: [
-      { q: "What is 'AI Synthesis' in the product descriptions?", a: "We use advanced AI algorithms to aggregate thousands of global reviews, giving you a 99% accurate summary of build quality, material feel, and overall asset integrity." },
-      { q: "Are the products authentic?", a: "100%. Every asset on GOBAAZAAR is sourced directly from verified manufacturers and passes a strict 5-point quality ledger check before being shipped." }
+      { q: "What is 'AI Synthesis' in the product descriptions?", a: "We are gonna use in the coming updates: Where we will use advanced AI algorithms to aggregate thousands of global reviews, giving you a 99% accurate summary of build quality, material feel, and overall asset integrity." },
+      { q: "Are the products authentic?", a: "100%. Every asset on Cartio is sourced directly from verified manufacturers and passes a strict 3-point quality check before being shipped." }
     ]
   },
   {
@@ -39,8 +40,8 @@ export default function FAQPage() {
     <div className="min-h-screen pt-32 pb-24 px-6 max-w-4xl mx-auto animate-fade-in">
       
       <div className="text-center mb-16">
-        <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight mb-4 uppercase">Knowledge Base</h1>
-        <p className="text-zinc-400 max-w-2xl mx-auto">Everything you need to know about GOBAAZAAR logistics, asset verification, and support protocols.</p>
+        <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight mb-4 uppercase">Frequently Asked Questions</h1>
+        <p className="text-zinc-400 max-w-2xl mx-auto">Everything you need to know about <i> <b> Cartio </b> </i> logistics, Product verification, and support services.</p>
       </div>
 
       <div className="space-y-12">
@@ -86,7 +87,7 @@ export default function FAQPage() {
 
       <div className="mt-20 p-8 bg-gradient-to-br from-blue-900/20 to-orange-900/20 border border-white/10 rounded-3xl text-center backdrop-blur-sm">
         <h3 className="text-xl font-black text-white mb-2 tracking-widest uppercase">Still need help?</h3>
-        <p className="text-zinc-400 text-sm mb-6">Our Support Desk nodes are online 24/7 to assist you.</p>
+        <p className="text-zinc-400 text-sm mb-6">Our Support Desks are online 12 hours-Replies in 20-30 mintues to assist you.</p>
         <Link href="/" className="inline-block px-8 py-4 bg-white text-black font-black text-xs uppercase tracking-[0.2em] rounded-xl hover:bg-orange-500 hover:text-white transition-all shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:shadow-[0_0_30px_rgba(249,115,22,0.4)]">
           Contact Support
         </Link>

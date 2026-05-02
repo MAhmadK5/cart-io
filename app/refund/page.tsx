@@ -17,9 +17,9 @@ export default function RefundPage() {
             <svg className="w-8 h-8 md:w-10 md:h-10 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
           </div>
           <p className="text-[10px] md:text-xs font-bold text-purple-400 uppercase tracking-[0.4em] mb-4">Official Directives</p>
-          <h1 className="text-5xl md:text-7xl font-black text-white tracking-tighter uppercase leading-none">Return Protocol</h1>
+          <h1 className="text-5xl md:text-7xl font-black text-white tracking-tighter uppercase leading-none">Return Process</h1>
           <p className="text-zinc-400 mt-6 text-lg md:text-xl font-light tracking-wide max-w-2xl mx-auto">
-            The CART IO 7-Day Satisfaction Ledger.
+            The CARTIO 7-Day Satisfaction Record.
           </p>
         </div>
 
@@ -29,17 +29,17 @@ export default function RefundPage() {
           <section>
             <h2 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tight mb-4 flex items-center gap-4">
               <span className="w-8 h-px bg-purple-500"></span>
-              The 7-Day Window
+              The 3-Day Window
             </h2>
             <p className="text-lg md:text-xl text-zinc-400 font-light leading-relaxed tracking-wide">
-              Our standard return window lasts 7 days from the date of successful delivery. If 7 days have passed since your asset arrived, we unfortunately cannot offer a refund or exchange. To be eligible for a return, your item must be strictly unused, in the exact same condition that you received it, and housed in its original, undamaged packaging with all tags attached.
+              Our standard return window lasts 3 days from the date of successful delivery. If 3 days have passed since your asset arrived, we unfortunately cannot offer a refund or exchange. To be eligible for a return, your item must be strictly unused, in the exact same condition that you received it, and housed in its original, undamaged packaging with all tags attached.
             </p>
           </section>
 
           <section>
             <h2 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tight mb-4 flex items-center gap-4">
               <span className="w-8 h-px bg-purple-500"></span>
-              Unboxing Protocol
+              Unboxing Rules
             </h2>
             <p className="text-lg md:text-xl text-zinc-400 font-light leading-relaxed tracking-wide mb-6">
               To ensure absolute transparency and to rapidly process claims for damaged or missing items, we highly encourage all clients to record a clear, continuous unboxing video upon receiving their package. Claims regarding physical damage or missing components without video evidence may be subject to rejection.
@@ -52,7 +52,7 @@ export default function RefundPage() {
               Reverse Logistics
             </h2>
             <p className="text-lg md:text-xl text-zinc-400 font-light leading-relaxed tracking-wide mb-6">
-              Unless the asset received is demonstrably defective or incorrect due to an error on our part, the client is responsible for bearing the shipping costs for returning the item to our facility. Original shipping costs are strictly non-refundable. If you receive a refund, the cost of the original delivery logistics will be deducted from your total refund.
+              Unless the asset received is demonstrably defective or incorrect due to an error on our part, the client is responsible for bearing the shipping costs Rs.250+ for returning the item to our facility. Original shipping costs are strictly non-refundable. If you receive a refund, the cost of the original delivery logistics will be deducted from your total refund.
             </p>
           </section>
 

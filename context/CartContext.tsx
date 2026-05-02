@@ -10,6 +10,8 @@ export type CartItem = {
   image: string;
   category: string;
   quantity: number;
+  color?: string;       // ✨ NEW: Stores the selected hex color
+  customText?: string;  // ✨ NEW: Stores their custom engraving
 };
 
 // Define everything the "Brain" can do

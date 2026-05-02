@@ -18,7 +18,7 @@ const alumniSans = Alumni_Sans({
 });
 
 export const metadata: Metadata = {
-  title: 'CART IO | Ultimate Luxury',
+  title: 'CARTIO | Ultimate Luxury',
   description: 'Elevating your everyday essentials. A curated premium lifestyle brand.',
 };
 

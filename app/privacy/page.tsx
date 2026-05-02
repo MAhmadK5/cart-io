@@ -16,7 +16,7 @@ export default function PrivacyPage() {
           <p className="text-[10px] md:text-xs font-bold text-purple-400 uppercase tracking-[0.4em] mb-4">Official Directives</p>
           <h1 className="text-5xl md:text-7xl font-black text-white tracking-tighter uppercase leading-none">Privacy Policy</h1>
           <p className="text-zinc-400 mt-6 text-lg md:text-xl font-light tracking-wide max-w-2xl mx-auto">
-            How CART IO collects, secures, and utilizes your data to provide a seamless premium experience.
+            How CARTIO collects, secures, and utilizes your data to provide a seamless premium experience.
           </p>
         </div>
 
@@ -29,7 +29,7 @@ export default function PrivacyPage() {
               Data Collection
             </h2>
             <p className="text-lg md:text-xl text-zinc-400 font-light leading-relaxed tracking-wide">
-              When you secure an asset from CART IO, we collect standard personal information required to fulfill your order. This includes your full name, mobile number (crucial for order verification in Pakistan), exact delivery address, and email address. When you browse our boutique, we automatically receive your computer’s internet protocol (IP) address to help us learn about your browser and operating system, ensuring a seamless experience.
+              When you secure an asset from CART IO, we collect standard personal information required to fulfill your order. This includes your full name, mobile number (crucial for order verification in Pakistan), exact delivery address, and email address. When you browse our e-Shop, we automatically receive your computer’s internet protocol (IP) address to help us learn about your browser and operating system, ensuring a seamless experience.
             </p>
           </section>
 
@@ -63,7 +63,7 @@ export default function PrivacyPage() {
               Cookies & Tracking
             </h2>
             <p className="text-lg md:text-xl text-zinc-400 font-light leading-relaxed tracking-wide">
-              CART IO utilizes cookies to maintain the contents of your shopping cart, remember your device for future visits, and gather analytics to improve our boutique's design. You have the right to disable cookies through your browser settings, though this may restrict your ability to seamlessly purchase items from our store.
+              CARTIO utilizes cookies to maintain the contents of your shopping cart, remember your device for future visits, and gather analytics to improve our boutique's design. You have the right to disable cookies through your browser settings, though this may restrict your ability to seamlessly purchase items from our store.
             </p>
           </section>
 
