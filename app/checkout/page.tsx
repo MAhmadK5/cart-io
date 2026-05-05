@@ -219,13 +219,13 @@ export default function CheckoutPage() {
 
                 <div className="bg-white/5 print:bg-gray-50 p-8 grid grid-cols-1 md:grid-cols-2 gap-10 border border-white/5">
                   <div>
-                    <p className="text-sm text-zinc-500 uppercase tracking-[0.3em] mb-4 font-black print:text-gray-500">Client Details</p>
+                    <p className="text-sm text-zinc-500 uppercase tracking-[0.3em] mb-4 font-black print:text-gray-500">Customer Details</p>
                     <p className="text-xl text-white print:text-black font-bold uppercase tracking-widest mb-1">{completedOrder.name}</p>
                     <p className="text-lg text-zinc-400 print:text-gray-600 font-light tracking-wide mb-1">{completedOrder.phone}</p>
                     <p className="text-lg text-zinc-400 print:text-gray-600 font-light tracking-wide">{completedOrder.address}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-zinc-500 uppercase tracking-[0.3em] mb-4 font-black print:text-gray-500">Payment Protocol</p>
+                    <p className="text-sm text-zinc-500 uppercase tracking-[0.3em] mb-4 font-black print:text-gray-500">Payment Mode</p>
                     <p className="text-xl text-purple-400 print:text-black font-bold uppercase tracking-widest">{completedOrder.payment === 'cod' ? 'Cash on Delivery' : 'Credit Card'}</p>
                   </div>
                 </div>
@@ -261,7 +261,7 @@ export default function CheckoutPage() {
             <h1 className="text-6xl md:text-8xl font-black text-white tracking-tighter uppercase leading-none">Secure Checkout</h1>
             <div className="flex items-center gap-3">
               <span className="w-3 h-3 bg-purple-500 rounded-full animate-pulse"></span>
-              <span className="text-base md:text-lg font-bold text-purple-400 uppercase tracking-[0.3em]">256-Bit SSL Encrypted</span>
+              <span className="text-base md:text-lg font-bold text-purple-400 uppercase tracking-[0.3em]">SSL Encrypted</span>
             </div>
           </div>
 
@@ -287,7 +287,7 @@ export default function CheckoutPage() {
               <section>
                 <div className="flex items-center gap-6 mb-12 border-b border-white/10 pb-6">
                   <span className="text-sm font-black text-purple-500 uppercase tracking-[0.4em]">Step 02</span>
-                  <h2 className="text-3xl md:text-4xl font-black text-white uppercase tracking-tight">Delivery Coordinates</h2>
+                  <h2 className="text-3xl md:text-4xl font-black text-white uppercase tracking-tight">Delivery Details</h2>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-10">
                   <div className="md:col-span-1">
@@ -311,7 +311,7 @@ export default function CheckoutPage() {
               <section>
                 <div className="flex items-center gap-6 mb-12 border-b border-white/10 pb-6">
                   <span className="text-sm font-black text-purple-500 uppercase tracking-[0.4em]">Step 03</span>
-                  <h2 className="text-3xl md:text-4xl font-black text-white uppercase tracking-tight">Payment Protocol</h2>
+                  <h2 className="text-3xl md:text-4xl font-black text-white uppercase tracking-tight">Payment Mode</h2>
                 </div>
                 <div className="space-y-8">
                   
@@ -328,32 +328,59 @@ export default function CheckoutPage() {
                     <input type="radio" name="payment" value="cod" className="hidden" checked={paymentMethod === 'cod'} onChange={() => setPaymentMethod('cod')} />
                   </label>
 
-                  <label className={`block cursor-pointer border p-8 transition-all duration-300 rounded-none ${paymentMethod === 'card' ? 'bg-white/10 border-white' : 'bg-transparent border-white/10 hover:border-white/30'}`}>
+                 <label className="block cursor-not-allowed border p-8 transition-all duration-300 rounded-none bg-transparent border-white/5 opacity-50 relative overflow-hidden">
+  {/* Diagonal "Coming Soon" Tape (Optional but looks premium) */}
+  <div className="absolute top-6 -right-10 bg-purple-600 text-white text-[8px] font-black uppercase tracking-[0.3em] py-1 px-12 rotate-45">
+    Coming Soon
+  </div>
+
+  <div className="flex items-center gap-8">
+    <div className="w-8 h-8 rounded-full border border-zinc-700 flex items-center justify-center shrink-0">
+    </div>
+    <div className="flex-1">
+      <div className="flex justify-between items-center pr-12">
+        <h4 className="text-2xl font-bold text-white uppercase tracking-widest">Credit / Debit</h4>
+        <div className="flex gap-4">
+          <span className="text-xs font-black text-zinc-500 uppercase tracking-[0.2em]">Visa</span>
+          <span className="text-xs font-black text-zinc-500 uppercase tracking-[0.2em]">Mastercard</span>
+        </div>
+      </div>
+      <p className="text-lg text-zinc-500 font-light tracking-wide mt-2">Secure digital gateway is currently under integration with coordination of team XPAY.</p>
+    </div>
+  </div>
+  {/* Disabled input prevents them from actually selecting it */}
+  <input type="radio" name="payment" value="card" className="hidden" disabled />
+</label>
+
+<label className="block cursor-not-allowed border p-8 transition-all duration-300 rounded-none bg-transparent border-white/5 opacity-50 relative overflow-hidden mt-8">
+                    {/* Diagonal "Coming Soon" Tape */}
+                    <div className="absolute top-6 -right-10 bg-purple-600 text-white text-[8px] font-black uppercase tracking-[0.3em] py-1 px-12 rotate-45 shadow-lg">
+                      Coming Soon
+                    </div>
+
                     <div className="flex items-center gap-8">
-                      <div className={`w-8 h-8 rounded-full border flex items-center justify-center shrink-0 ${paymentMethod === 'card' ? 'border-white' : 'border-zinc-600'}`}>
-                        {paymentMethod === 'card' && <div className="w-4 h-4 bg-white rounded-full"></div>}
+                      <div className="w-8 h-8 rounded-full border border-zinc-700 flex items-center justify-center shrink-0">
                       </div>
                       <div className="flex-1">
-                        <div className="flex justify-between items-center">
-                          <h4 className="text-2xl font-bold text-white uppercase tracking-widest">Credit / Debit</h4>
-                          <div className="flex gap-4">
-                            <span className="text-xs font-black text-zinc-400 uppercase tracking-[0.2em]">Visa</span>
-                            <span className="text-xs font-black text-zinc-400 uppercase tracking-[0.2em]">Mastercard</span>
+                        <div className="flex justify-between items-center pr-12">
+                          <h4 className="text-2xl font-bold text-white uppercase tracking-widest">Bank Transfer</h4>
+                          <div className="flex gap-4 text-zinc-500">
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 21h18M3 10h18M3 7l9-4 9 4M4 10v11m16-11v11m-8-11v11m-4-11v11m8-11v11" /></svg>
                           </div>
                         </div>
-                        <p className="text-lg text-zinc-500 font-light tracking-wide mt-2">Secure digital payment via external gateway.</p>
+                        <p className="text-lg text-zinc-500 font-light tracking-wide mt-2">Direct IBAN network processing is being finalized.</p>
                       </div>
                     </div>
-                    <input type="radio" name="payment" value="card" className="hidden" checked={paymentMethod === 'card'} onChange={() => setPaymentMethod('card')} />
+                    {/* Disabled input prevents selection */}
+                    <input type="radio" name="payment" value="bank" className="hidden" disabled />
                   </label>
-
                 </div>
               </section>
             </div>
 
             <div className="w-full lg:w-2/5">
               <div className="sticky top-32 bg-zinc-950/60 backdrop-blur-2xl border border-white/10 p-10 md:p-14 shadow-2xl">
-                <h2 className="text-3xl font-black text-white mb-12 uppercase tracking-tighter border-b border-white/10 pb-8">Ledger Summary</h2>
+                <h2 className="text-3xl font-black text-white mb-12 uppercase tracking-tighter border-b border-white/10 pb-8">Order Summary</h2>
                 
                 <div className="space-y-8 mb-12 max-h-96 overflow-y-auto custom-scrollbar pr-6">
                   {cartItems.map((item) => (
@@ -392,13 +419,13 @@ export default function CheckoutPage() {
                     <span className="text-white">Rs. {subtotal.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between text-xl text-zinc-400 font-light tracking-wide items-center">
-                    <span>Logistics Fee</span>
+                    <span>Dilivery Fee</span>
                     <span className={shipping === 0 ? "text-purple-400 font-bold uppercase tracking-[0.2em] text-[10px]" : "text-white"}>
                       {shipping === 0 ? "Complimentary" : `Rs. ${shipping.toLocaleString()}`}
                     </span>
                   </div>
                   <div className="flex justify-between items-end pt-8 mt-4">
-                    <span className="text-sm font-black text-zinc-500 uppercase tracking-[0.3em]">Total Valuation</span>
+                    <span className="text-sm font-black text-zinc-500 uppercase tracking-[0.3em]">Total Bill</span>
                     <span className="text-5xl font-black text-white tracking-tighter">Rs. {total.toLocaleString()}</span>
                   </div>
                 </div>
@@ -415,7 +442,7 @@ export default function CheckoutPage() {
                     </>
                   ) : (
                     <>
-                      <span>Secure Assets</span>
+                      <span>Confirm Order</span>
                       <span className="group-hover:translate-x-3 transition-transform text-2xl leading-none">→</span>
                     </>
                   )}
