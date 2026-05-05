@@ -27,7 +27,7 @@ export default function Header() {
       <div className="w-full bg-[#050505] border-b border-white/5 py-2.5 flex items-center justify-center gap-3 relative z-[101]">
         <span className="w-1.5 h-1.5 bg-purple-500 rounded-full animate-pulse"></span>
         <span className="text-xs md:text-sm font-bold uppercase tracking-[0.2em] text-zinc-400">
-          Free Nationwide Delivery on Orders Over <span className="text-white font-black">Rs. 2500</span>
+          Free Nationwide Delivery on Orders Over <span className="text-white font-black">Rs. 3000</span>
         </span>
       </div>
 
@@ -77,11 +77,6 @@ export default function Header() {
               <span className="absolute -bottom-2 left-0 w-0 h-0.5 bg-purple-500 transition-all duration-300 group-hover:w-full"></span>
             </Link>
             
-            <Link href="/developer" className="relative text-base xl:text-lg font-bold uppercase tracking-widest text-purple-400 hover:text-purple-300 transition-colors group">
-              Developer
-              <span className="absolute -bottom-2 left-0 w-0 h-0.5 bg-purple-500 transition-all duration-300 group-hover:w-full"></span>
-            </Link>
-
             {/* CONTACT US DROPDOWN */}
             <div className="relative group py-2">
               <button className="relative text-base xl:text-lg font-bold uppercase tracking-widest text-zinc-300 hover:text-white transition-colors flex items-center gap-1.5">
@@ -113,6 +108,10 @@ export default function Header() {
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
               Admin
               <span className="absolute -bottom-2 left-4 xl:left-6 w-0 h-0.5 bg-purple-500 transition-all duration-300 group-hover:w-full"></span>
+            </Link>
+                        <Link href="/developer" className="relative text-base xl:text-lg font-bold uppercase tracking-widest text-purple-400 hover:text-purple-300 transition-colors group">
+              Developer's Message
+              <span className="absolute -bottom-2 left-0 w-0 h-0.5 bg-purple-500 transition-all duration-300 group-hover:w-full"></span>
             </Link>
           </nav>
 

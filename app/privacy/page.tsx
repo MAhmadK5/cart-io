@@ -29,7 +29,7 @@ export default function PrivacyPage() {
               Data Collection
             </h2>
             <p className="text-lg md:text-xl text-zinc-400 font-light leading-relaxed tracking-wide">
-              When you secure an asset from CART IO, we collect standard personal information required to fulfill your order. This includes your full name, mobile number (crucial for order verification in Pakistan), exact delivery address, and email address. When you browse our e-Shop, we automatically receive your computer’s internet protocol (IP) address to help us learn about your browser and operating system, ensuring a seamless experience.
+              When you secure an asset from CARTIO, we collect standard personal information required to fulfill your order. This includes your full name, mobile number (crucial for order verification in Pakistan), exact delivery address, and email address. When you browse our e-Shop, we automatically receive your computer’s internet protocol (IP) address to help us learn about your browser and operating system, ensuring a seamless experience.
             </p>
           </section>
 
@@ -39,7 +39,7 @@ export default function PrivacyPage() {
               Logistics & Courier Partners
             </h2>
             <p className="text-lg md:text-xl text-zinc-400 font-light leading-relaxed tracking-wide mb-6">
-              To guarantee nationwide delivery across Pakistan, CART IO partners with premium local logistics and courier services (such as TCS, Leopards, CallCourier, or Trax). We only share the absolute minimum required data—your name, phone number, and delivery address—with these third parties solely for the purpose of fulfilling and dispatching your order.
+              To guarantee nationwide delivery across Pakistan, CARTIO partners with Leopard Courier Service and sometimes TCS, CallCourier. We only share the absolute minimum required data—your name, phone number, and delivery address—with these third parties solely for the purpose of fulfilling and dispatching your order.
             </p>
           </section>
 
@@ -49,11 +49,11 @@ export default function PrivacyPage() {
               Payment & Security
             </h2>
             <p className="text-lg md:text-xl text-zinc-400 font-light leading-relaxed tracking-wide mb-6">
-              For Cash on Delivery (COD) orders, your mobile number will be used to verify the authenticity of the order before dispatch. For prepaid orders, our digital payment gateways adhere to strict industry standards (PCI-DSS) to ensure the secure handling of credit and debit card information. We do not store your raw credit card details on our local servers.
+              For Cash on Delivery (COD) orders, your mobile number will be used to verify the authenticity of the order before dispatch. For prepaid orders --COMING SOON, our digital payment gateways adhere to strict industry standards (PCI-DSS) to ensure the secure handling of credit and debit card information. We do not store your raw credit card details on our local servers.
             </p>
             <div className="flex items-center gap-3 px-5 py-3 bg-purple-500/10 border border-purple-500/30 rounded-xl w-fit shadow-[0_0_15px_rgba(147,51,234,0.15)]">
               <svg className="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
-              <span className="text-xs md:text-sm font-bold text-purple-400 uppercase tracking-widest">256-Bit SSL Encrypted Protocol</span>
+              <span className="text-xs md:text-sm font-bold text-purple-400 uppercase tracking-widest">SSL Encrypted Checkout</span>
             </div>
           </section>
 

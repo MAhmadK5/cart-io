@@ -7,24 +7,24 @@ const faqs = [
   {
     category: "Orders & Shipping",
     questions: [
-      { q: "How long does delivery take?", a: "Standard delivery across Pakistan takes 3-5 business days. Premium rapid-node delivery (where available) takes 24-48 hours." },
-      { q: "Is there a Delivery Fee ?", a: "YES- (TCS) charges Rupees 250 for a single delivery...But the delivery charges are complementary, 'If the order amount is above Rupees 2500'" },
-      { q: "Do you offer Cash on Delivery (COD)?", a: "Yes, we offer Cash on Delivery nationwide for all orders under Rs. 20,000 to ensure maximum trust and convenience." },
+      { q: "How long does delivery take?", a: "Standard delivery across Pakistan takes 7 business days." },
+      { q: "Is there a Delivery Fee ?", a: "YES- (TCS) charges Rupees 250 for a single delivery...But the delivery charges are complementary, 'If the order amount is above Rupees 3000'" },
+      { q: "Do you offer Cash on Delivery (COD)?", a: "Yes, we offer Cash on Delivery nationwide for all orders under Rs. 10,000 to ensure maximum trust and convenience." },
       { q: "Can I change my shipping address?", a: "You can update your shipping address within 12 hours of placing the order by contacting our Support Desk via WhatsApp (Preferred) or EMAIL." }
     ]
   },
   {
-    category: "Products & Tech",
+    category: "Products & AI",
     questions: [
-      { q: "What is 'AI Synthesis' in the product descriptions?", a: "We are gonna use in the coming updates: Where we will use advanced AI algorithms to aggregate thousands of global reviews, giving you a 99% accurate summary of build quality, material feel, and overall asset integrity." },
+      { q: "What is 'AI Synthesis' in the product descriptions?", a: "We are using GEMINI ENGINE in the website to help customers by getting information for the items listed in CARTIO shop. Incoming Update : We will use advanced AI algorithms to aggregate thousands of global reviews, giving you a 99% accurate summary of build quality, material feel, and overall asset integrity." },
       { q: "Are the products authentic?", a: "100%. Every asset on Cartio is sourced directly from verified manufacturers and passes a strict 3-point quality check before being shipped." }
     ]
   },
   {
-    category: "Returns & Refunds",
+    category: "Returns,Exchange & Refunds",
     questions: [
-      { q: "What is your return policy?", a: "We offer a 7-day hassle-free return window. If the product is damaged or differs from the AI Synthesis description, we will replace it or refund you completely." },
-      { q: "How do I initiate a return?", a: "Simply reach out to our Support Desk via WhatsApp or Email with your Order ID and a photo of the product. We will dispatch a courier to pick it up." }
+      { q: "What is your return policy?", a: "We don't offer a refund till now. Soon we are going to support that . Sorry for any Inconvenience. Although there is exchange possible If the product is damaged, we will replace it for you completely." },
+      { q: "How do I initiate a return?", a: "Not supporting Returns till now. Coming Soon! " }
     ]
   }
 ];

@@ -25,7 +25,8 @@ export default function CheckoutPage() {
   const [orderSuccess, setOrderSuccess] = useState(false);
   const [completedOrder, setCompletedOrder] = useState<any>(null);
 
-  const shipping = cartItems.length > 0 ? (subtotal >= 2500 ? 0 : 250) : 0; 
+  // ✨ UPDATED: Complimentary shipping threshold raised to Rs. 3000 ✨
+  const shipping = cartItems.length > 0 ? (subtotal >= 3000 ? 0 : 250) : 0; 
   const total = subtotal + shipping;
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -71,7 +72,7 @@ export default function CheckoutPage() {
             subtotal: subtotal,
             shipping_fee: shipping,
             total_amount: total,
-            items: cartItems, // This now automatically includes 'color' and 'customText'
+            items: cartItems, // Automatically includes color, customText, note
             status: 'Processing'
           }
         ]);
@@ -128,7 +129,7 @@ export default function CheckoutPage() {
 
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6 border-b border-white/10 print:border-black pb-8 mb-8">
                 <div>
-                  <p className="text-sm text-zinc-500 uppercase tracking-[0.3em] mb-2 print:text-gray-500 font-bold">Ledger ID</p>
+                  <p className="text-sm text-zinc-500 uppercase tracking-[0.3em] mb-2 print:text-gray-500 font-bold">Order ID</p>
                   <p className="text-4xl md:text-5xl font-black text-white tracking-tighter print:text-black">{completedOrder.id}</p>
                 </div>
                 <div className="text-left sm:text-right">
@@ -142,7 +143,7 @@ export default function CheckoutPage() {
 
               <div className="space-y-12">
                 <div>
-                  <h3 className="text-lg font-black text-zinc-500 uppercase tracking-[0.3em] mb-8 print:text-gray-500">Asset Details</h3>
+                  <h3 className="text-lg font-black text-zinc-500 uppercase tracking-[0.3em] mb-8 print:text-gray-500">Product Details</h3>
                   <div className="space-y-8">
                     {completedOrder.items.map((item: any, index: number) => (
                       <div key={index} className="flex justify-between items-center gap-6">
@@ -153,17 +154,17 @@ export default function CheckoutPage() {
                           <div>
                             <p className="text-xl md:text-2xl font-bold text-white print:text-black line-clamp-1 leading-none mb-1.5">{item.name}</p>
                             
-                            {/* ✨ NEW: DISPLAY COLORS & ENGRAVING ON RECEIPT ✨ */}
-                            {(item.color || item.customText) && (
+                            {/* ✨ NEW: ROBUST DISPLAY COLORS & NOTES/ENGRAVING ON RECEIPT ✨ */}
+                            {(item.color || item.customText || item.note) && (
                               <div className="flex flex-col gap-0.5 mb-1.5">
                                 {item.color && (
                                   <p className="text-[10px] text-zinc-400 print:text-gray-500 uppercase tracking-widest flex items-center gap-2">
                                     Finish: <span className="w-2.5 h-2.5 rounded-full border border-white/20 print:border-gray-300" style={{ backgroundColor: item.color }}></span>
                                   </p>
                                 )}
-                                {item.customText && (
+                                {(item.customText || item.note) && (
                                   <p className="text-[10px] text-zinc-400 print:text-gray-500 uppercase tracking-widest">
-                                    Engraving: <span className="text-purple-400 print:text-black font-bold tracking-tight">"{item.customText}"</span>
+                                    Name/Note: <span className="text-purple-400 print:text-black font-bold tracking-tight">"{item.customText || item.note}"</span>
                                   </p>
                                 )}
                               </div>
@@ -343,17 +344,17 @@ export default function CheckoutPage() {
                       <div className="flex-1">
                         <h4 className="text-xl font-bold text-white uppercase tracking-tight line-clamp-2 mb-1.5 leading-tight">{item.name}</h4>
                         
-                        {/* ✨ NEW: DISPLAY COLORS & ENGRAVING IN SUMMARY ✨ */}
-                        {(item.color || item.customText) && (
+                        {/* ✨ NEW: ROBUST DISPLAY COLORS & NOTES IN SUMMARY ✨ */}
+                        {(item.color || item.customText || item.note) && (
                           <div className="flex flex-col gap-1 mb-3 border-l-2 border-purple-500/30 pl-3">
                             {item.color && (
                               <span className="text-[10px] text-zinc-400 uppercase tracking-widest flex items-center gap-2">
                                 Finish: <span className="w-3 h-3 rounded-full border border-white/20 shadow-inner" style={{ backgroundColor: item.color }}></span>
                               </span>
                             )}
-                            {item.customText && (
+                            {(item.customText || item.note) && (
                               <span className="text-[10px] text-zinc-400 uppercase tracking-widest">
-                                Engraving: <span className="text-purple-400 font-bold tracking-tight">"{item.customText}"</span>
+                                Name/Note: <span className="text-purple-400 font-bold tracking-tight">"{item.customText || item.note}"</span>
                               </span>
                             )}
                           </div>

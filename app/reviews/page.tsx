@@ -4,11 +4,11 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { supabase } from '../../lib/supabase';
 
+// ✨ UPDATED: Matches the new database schema exactly
 type Review = {
   id: number;
-  name: string;
-  tag: string;
-  text: string;
+  user_name: string;
+  comment: string;
   rating: number;
   created_at?: string;
 };
@@ -21,7 +21,6 @@ export default function ReviewsPage() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [newReview, setNewReview] = useState({
     name: '',
-    tag: '',
     text: '',
     rating: 5
   });
@@ -35,7 +34,7 @@ export default function ReviewsPage() {
       const { data, error } = await supabase
         .from('reviews')
         .select('*')
-        .order('id', { ascending: false });
+        .order('created_at', { ascending: false }); // Changed to sort by newest first!
       
       if (error) throw error;
       if (data) setReviews(data);
@@ -50,17 +49,17 @@ export default function ReviewsPage() {
     e.preventDefault();
     setIsSubmitting(true);
     try {
+      // ✨ UPDATED: Maps to the new columns: user_name and comment
       const { error } = await supabase.from('reviews').insert([{
-        name: newReview.name,
-        tag: newReview.tag || 'Verified Client',
-        text: newReview.text,
+        user_name: newReview.name.trim() || 'Anonymous Client',
+        comment: newReview.text,
         rating: newReview.rating
       }]);
 
       if (error) throw error;
 
       setShowSuccess(true);
-      setNewReview({ name: '', tag: '', text: '', rating: 5 });
+      setNewReview({ name: '', text: '', rating: 5 });
       fetchReviews(); // Refresh the list instantly
       
       setTimeout(() => setShowSuccess(false), 5000);
@@ -110,9 +109,6 @@ export default function ReviewsPage() {
                     <input required value={newReview.name} onChange={(e) => setNewReview({...newReview, name: e.target.value})} type="text" placeholder="Your Name" className="w-full bg-transparent border-b border-white/20 text-white text-lg py-3 focus:outline-none focus:border-purple-500 transition-colors placeholder:text-zinc-600 font-light rounded-none" />
                   </div>
                   <div>
-                    <input value={newReview.tag} onChange={(e) => setNewReview({...newReview, tag: e.target.value})} type="text" placeholder="Title (e.g. Interior Designer)" className="w-full bg-transparent border-b border-white/20 text-white text-lg py-3 focus:outline-none focus:border-purple-500 transition-colors placeholder:text-zinc-600 font-light rounded-none" />
-                  </div>
-                  <div>
                     <p className="text-xs font-bold text-zinc-500 uppercase tracking-[0.2em] mb-4 mt-6">Rating</p>
                     <div className="flex gap-2">
                       {[1, 2, 3, 4, 5].map((star) => (
@@ -151,12 +147,14 @@ export default function ReviewsPage() {
                     <div className="relative z-10">
                       <div className="flex items-center justify-between mb-8">
                         <div className="flex items-center gap-4">
-                          <div className="w-14 h-14 rounded-full bg-zinc-800 flex items-center justify-center text-xl font-black text-zinc-300 border border-white/10">
-                            {review.name.charAt(0)}
+                          <div className="w-14 h-14 rounded-full bg-zinc-800 flex items-center justify-center text-xl font-black text-zinc-300 border border-white/10 uppercase">
+                            {/* ✨ FIXED: Fallback to 'A' if name is missing to prevent crash */}
+                            {(review.user_name || 'A').charAt(0)}
                           </div>
                           <div>
-                            <h4 className="text-white font-black text-xl">{review.name}</h4>
-                            <p className="text-xs text-purple-400 uppercase tracking-[0.2em] font-bold mt-1">{review.tag}</p>
+                            {/* ✨ FIXED: Uses user_name */}
+                            <h4 className="text-white font-black text-xl line-clamp-1">{review.user_name || 'Anonymous'}</h4>
+                            <p className="text-xs text-purple-400 uppercase tracking-[0.2em] font-bold mt-1">Verified Client</p>
                           </div>
                         </div>
                         <div className="flex gap-1 text-purple-500">
@@ -165,8 +163,9 @@ export default function ReviewsPage() {
                           ))}
                         </div>
                       </div>
-                      <p className="text-zinc-300 font-medium leading-relaxed text-xl md:text-2xl">
-                        "{review.text}"
+                      {/* ✨ FIXED: Uses comment instead of text */}
+                      <p className="text-zinc-300 font-medium leading-relaxed text-lg md:text-xl italic">
+                        "{review.comment}"
                       </p>
                     </div>
                   </div>

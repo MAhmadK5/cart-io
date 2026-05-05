@@ -2,24 +2,24 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
-// Define what a cart item looks like
-export type CartItem = {
-  id: number;
+type CartItem = {
+  id: any;
+  cartItemId?: string; // ✨ NEW: Unique signature for variations
   name: string;
   price: number;
   image: string;
   category: string;
   quantity: number;
-  color?: string;       // ✨ NEW: Stores the selected hex color
-  customText?: string;  // ✨ NEW: Stores their custom engraving
+  color?: string;
+  customText?: string;
+  note?: string;
 };
 
-// Define everything the "Brain" can do
 type CartContextType = {
   cartItems: CartItem[];
   addToCart: (item: CartItem) => void;
-  removeFromCart: (id: number) => void;
-  updateQuantity: (id: number, quantity: number) => void;
+  removeFromCart: (cartItemId: string | number) => void;
+  updateQuantity: (cartItemId: string | number, quantity: number) => void;
   clearCart: () => void;
   subtotal: number;
 };
@@ -28,52 +28,65 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  const [isLoaded, setIsLoaded] = useState(false);
 
-  // 1. Load cart from browser memory when they visit the site
+  // Load from local storage
   useEffect(() => {
-    const savedCart = localStorage.getItem('gobaazaar_cart');
-    if (savedCart) {
-      setCartItems(JSON.parse(savedCart));
+    const stored = localStorage.getItem('cartio_cart');
+    if (stored) {
+      try { setCartItems(JSON.parse(stored)); } catch (e) {}
     }
-    setIsLoaded(true);
   }, []);
 
-  // 2. Save to browser memory every time the cart changes
+  // Save to local storage
   useEffect(() => {
-    if (isLoaded) {
-      localStorage.setItem('gobaazaar_cart', JSON.stringify(cartItems));
-    }
-  }, [cartItems, isLoaded]);
+    localStorage.setItem('cartio_cart', JSON.stringify(cartItems));
+  }, [cartItems]);
 
-  // 3. Add item (or increase quantity if it already exists)
   const addToCart = (newItem: CartItem) => {
-    setCartItems((prevItems) => {
-      const existingItem = prevItems.find((item) => item.id === newItem.id);
-      if (existingItem) {
-        return prevItems.map((item) => 
-          item.id === newItem.id ? { ...item, quantity: item.quantity + newItem.quantity } : item
-        );
+    setCartItems(prev => {
+      // ✨ CORE FIX: Create a unique signature for this specific variation
+      const signature = `${newItem.id}-${newItem.color || 'none'}-${newItem.customText || 'none'}-${newItem.note || 'none'}`;
+
+      const existingIndex = prev.findIndex(item => {
+        const itemSignature = item.cartItemId || `${item.id}-${item.color || 'none'}-${item.customText || 'none'}-${item.note || 'none'}`;
+        return itemSignature === signature;
+      });
+
+      // If exact same product + color + note exists, increase quantity
+      if (existingIndex >= 0) {
+        const updated = [...prev];
+        updated[existingIndex].quantity += (newItem.quantity || 1);
+        return updated;
       }
-      return [...prevItems, newItem];
+
+      // Otherwise, add as a completely new item in the cart!
+      return [...prev, { ...newItem, cartItemId: signature }];
     });
-    
-    // Automatically slide the cart open!
-    window.dispatchEvent(new Event('openCart'));
   };
 
-  const removeFromCart = (id: number) => {
-    setCartItems((prev) => prev.filter((item) => item.id !== id));
+  // We now remove items based on their unique signature, not just their DB ID
+  const removeFromCart = (cartItemIdOrId: string | number) => {
+    setCartItems(prev => prev.filter(item => {
+      const idToCheck = item.cartItemId || item.id;
+      return idToCheck !== cartItemIdOrId;
+    }));
   };
 
-  const updateQuantity = (id: number, quantity: number) => {
-    if (quantity < 1) return;
-    setCartItems((prev) => prev.map((item) => item.id === id ? { ...item, quantity } : item));
+  const updateQuantity = (cartItemIdOrId: string | number, quantity: number) => {
+    if (quantity <= 0) {
+      removeFromCart(cartItemIdOrId);
+      return;
+    }
+    setCartItems(prev => prev.map(item => {
+      const idToCheck = item.cartItemId || item.id;
+      if (idToCheck === cartItemIdOrId) {
+        return { ...item, quantity };
+      }
+      return item;
+    }));
   };
 
-  const clearCart = () => {
-    setCartItems([]);
-  };
+  const clearCart = () => setCartItems([]);
 
   const subtotal = cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
 
@@ -84,11 +97,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
   );
 }
 
-// Helper hook to use the cart anywhere in your app
 export const useCart = () => {
   const context = useContext(CartContext);
-  if (context === undefined) {
-    throw new Error('useCart must be used within a CartProvider');
-  }
+  if (!context) throw new Error('useCart must be used within a CartProvider');
   return context;
 };

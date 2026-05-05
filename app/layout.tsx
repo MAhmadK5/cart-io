@@ -34,7 +34,7 @@ export default function RootLayout({
         
         <CartProvider>
           <Header />
-          <BackButton />
+          
           
           <main className="flex-grow pt-32">
             {children}
