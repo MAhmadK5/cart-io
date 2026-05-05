@@ -4,9 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation'; 
 import { supabase } from '../../lib/supabase'; 
-import { useCart } from '../../context/CartContext'; // ✨ ADDED CART CONTEXT ✨
-
-const CATEGORIES = ["All", "MiNi Fan", "Stanley tumblers", "Prayer Mat", "Beauty products", "Tables", "Decoration","Others"];
+import { useCart } from '../../context/CartContext'; 
 
 type Product = {
   id: number;
@@ -25,9 +23,11 @@ type Product = {
 function MarketContent() {
   const searchParams = useSearchParams();
   const urlCategory = searchParams.get('category');
-  const { addToCart } = useCart(); // ✨ INITIALIZED CART ✨
+  const { addToCart } = useCart(); 
 
   const [products, setProducts] = useState<Product[]>([]);
+  // ✨ NEW: Dynamic Categories State ✨
+  const [categories, setCategories] = useState<string[]>(["All"]);
   const [loading, setLoading] = useState(true);
   
   const [activeCategory, setActiveCategory] = useState(urlCategory || "All");
@@ -40,9 +40,10 @@ function MarketContent() {
   const [gridLayout, setGridLayout] = useState<1 | 2 | 3 | 4>(3); 
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
+  // Update active category if URL changes and matches our dynamic categories
   useEffect(() => {
-    if (urlCategory && CATEGORIES.includes(urlCategory)) setActiveCategory(urlCategory);
-  }, [urlCategory]);
+    if (urlCategory && categories.includes(urlCategory)) setActiveCategory(urlCategory);
+  }, [urlCategory, categories]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -56,18 +57,26 @@ function MarketContent() {
   }, []);
 
   useEffect(() => {
-    async function fetchProducts() {
+    async function fetchMarketData() {
       try {
-        const { data, error } = await supabase.from('products').select('*').order('id', { ascending: true });
+        // ✨ Fetch Dynamic Categories from Supabase ✨
+        const { data: catData } = await supabase.from('categories').select('name').order('name');
+        if (catData) {
+          setCategories(["All", ...catData.map(c => c.name)]);
+        }
+
+        // Fetch Products
+        const { data: prodData, error } = await supabase.from('products').select('*').order('id', { ascending: true });
         if (error) throw error;
-        if (data) setProducts(data);
+        if (prodData) setProducts(prodData);
+        
       } catch (error) {
-        console.error("Error fetching inventory:", error);
+        console.error("Error fetching market data:", error);
       } finally {
         setLoading(false);
       }
     }
-    fetchProducts();
+    fetchMarketData();
   }, []);
 
   const filteredProducts = products.filter(product => {
@@ -98,7 +107,6 @@ function MarketContent() {
     return "grid-cols-2 lg:grid-cols-4";
   };
 
-  // ✨ NEW: Helper function to actually add to cart and open drawer ✨
   const handleSecureItem = (e: React.MouseEvent, product: Product) => {
     e.preventDefault();
     addToCart({
@@ -117,7 +125,8 @@ function MarketContent() {
       <div>
         <h3 className="text-[10px] md:text-xs font-black text-zinc-500 uppercase tracking-[0.3em] mb-6">Departments</h3>
         <div className="flex flex-col gap-2">
-          {CATEGORIES.map((category) => {
+          {/* ✨ MAP OVER DYNAMIC CATEGORIES ✨ */}
+          {categories.map((category) => {
             const count = getCategoryCount(category);
             const isActive = activeCategory === category;
             return (
@@ -266,12 +275,6 @@ function MarketContent() {
                     <div className={`p-5 md:p-8 flex flex-col flex-1 relative z-10 ${gridLayout === 1 ? 'justify-center' : ''}`}>
                       <div className="flex justify-between items-start mb-3">
                         <p className="text-[9px] md:text-[10px] text-purple-400 font-bold uppercase tracking-[0.4em]">{product.category}</p>
-                        {gridLayout !== 1 && (
-                          <div className="flex items-center gap-1.5">
-                            <svg className="w-3 h-3 md:w-4 md:h-4 text-purple-500" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                            <span className="text-[10px] md:text-xs font-bold text-zinc-400">{product.rating}</span>
-                          </div>
-                        )}
                       </div>
                       
                       <Link href={`/market/${product.id}`} className="block group/title mb-4 md:mb-6">
