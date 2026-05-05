@@ -92,7 +92,7 @@ export default function Header() {
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 00-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347M12 0C5.373 0 0 5.373 0 12c0 2.123.553 4.195 1.585 6.014L.16 23.84l5.973-1.566C7.945 23.321 9.943 24 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0z"/></svg>
                   WhatsApp
                 </a>
-                <a href="mailto:gobaazaar0@gmail.com" className="px-5 py-4 text-base font-black uppercase tracking-widest text-zinc-300 hover:bg-purple-500/10 hover:text-purple-400 transition-colors flex items-center gap-3 border-t border-white/5">
+                <a href="mailto:pkcartio@gmail.com" className="px-5 py-4 text-base font-black uppercase tracking-widest text-zinc-300 hover:bg-purple-500/10 hover:text-purple-400 transition-colors flex items-center gap-3 border-t border-white/5">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
                   Email Us
                 </a>
@@ -110,7 +110,7 @@ export default function Header() {
               <span className="absolute -bottom-2 left-4 xl:left-6 w-0 h-0.5 bg-purple-500 transition-all duration-300 group-hover:w-full"></span>
             </Link>
                         <Link href="/developer" className="relative text-base xl:text-lg font-bold uppercase tracking-widest text-purple-400 hover:text-purple-300 transition-colors group">
-              Developer's Message
+              Dev's Message
               <span className="absolute -bottom-2 left-0 w-0 h-0.5 bg-purple-500 transition-all duration-300 group-hover:w-full"></span>
             </Link>
           </nav>

@@ -10,6 +10,7 @@ type Product = {
   id: number;
   name: string;
   price: number;
+  original_price: number | null; // ✨ ADDED ORIGINAL PRICE ✨
   category: string;
   tag: string | null;
   rating: number;
@@ -26,7 +27,6 @@ function MarketContent() {
   const { addToCart } = useCart(); 
 
   const [products, setProducts] = useState<Product[]>([]);
-  // ✨ NEW: Dynamic Categories State ✨
   const [categories, setCategories] = useState<string[]>(["All"]);
   const [loading, setLoading] = useState(true);
   
@@ -37,12 +37,15 @@ function MarketContent() {
   const [maxPrice, setMaxPrice] = useState("");
   const [inStockOnly, setInStockOnly] = useState(false);
   
+  // ✨ NEW: SALE FILTER ✨
+  const [saleOnly, setSaleOnly] = useState(false);
+  
   const [gridLayout, setGridLayout] = useState<1 | 2 | 3 | 4>(3); 
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
-  // Update active category if URL changes and matches our dynamic categories
   useEffect(() => {
     if (urlCategory && categories.includes(urlCategory)) setActiveCategory(urlCategory);
+    if (urlCategory === "Sale") { setActiveCategory("All"); setSaleOnly(true); }
   }, [urlCategory, categories]);
 
   useEffect(() => {
@@ -59,22 +62,13 @@ function MarketContent() {
   useEffect(() => {
     async function fetchMarketData() {
       try {
-        // ✨ Fetch Dynamic Categories from Supabase ✨
         const { data: catData } = await supabase.from('categories').select('name').order('name');
-        if (catData) {
-          setCategories(["All", ...catData.map(c => c.name)]);
-        }
+        if (catData) setCategories(["All", ...catData.map(c => c.name)]);
 
-        // Fetch Products
         const { data: prodData, error } = await supabase.from('products').select('*').order('id', { ascending: true });
         if (error) throw error;
         if (prodData) setProducts(prodData);
-        
-      } catch (error) {
-        console.error("Error fetching market data:", error);
-      } finally {
-        setLoading(false);
-      }
+      } catch (error) { console.error("Error fetching market data:", error); } finally { setLoading(false); }
     }
     fetchMarketData();
   }, []);
@@ -85,7 +79,10 @@ function MarketContent() {
     const matchesMin = minPrice === "" || product.price >= Number(minPrice);
     const matchesMax = maxPrice === "" || product.price <= Number(maxPrice);
     const matchesStock = !inStockOnly || product.stock > 0;
-    return matchesCategory && matchesSearch && matchesMin && matchesMax && matchesStock;
+    // ✨ SALE LOGIC ✨
+    const matchesSale = !saleOnly || (product.original_price && product.original_price > product.price);
+    
+    return matchesCategory && matchesSearch && matchesMin && matchesMax && matchesStock && matchesSale;
   });
 
   const displayedProducts = [...filteredProducts].sort((a, b) => {
@@ -109,30 +106,41 @@ function MarketContent() {
 
   const handleSecureItem = (e: React.MouseEvent, product: Product) => {
     e.preventDefault();
-    addToCart({
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      image: product.image,
-      category: product.category,
-      quantity: 1
-    });
+    addToCart({ id: product.id, name: product.name, price: product.price, image: product.image, category: product.category, quantity: 1 });
     window.dispatchEvent(new Event('openCart'));
   };
 
   const renderFilters = () => (
     <div className="space-y-10">
+      
+      {/* ✨ NEW: DEDICATED PROMOTIONS TOGGLE ✨ */}
+      <div className="p-5 bg-gradient-to-br from-red-500/10 to-orange-500/10 border border-red-500/20 rounded-2xl">
+        <label className="flex items-center justify-between cursor-pointer group">
+          <div className="flex flex-col">
+            <span className="text-sm font-black uppercase tracking-widest text-red-500 mb-1 flex items-center gap-2">
+              <svg className="w-4 h-4 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+              Flash Sales
+            </span>
+            <span className="text-[10px] text-zinc-400 font-light">View discounted assets</span>
+          </div>
+          <div className="relative">
+            <input type="checkbox" className="sr-only" checked={saleOnly} onChange={() => setSaleOnly(!saleOnly)} />
+            <div className={`block w-12 h-7 rounded-full transition-colors duration-300 ${saleOnly ? 'bg-red-500' : 'bg-zinc-800'}`}></div>
+            <div className={`dot absolute left-1 top-1 bg-white w-5 h-5 rounded-full transition-transform duration-300 ${saleOnly ? 'transform translate-x-5' : ''}`}></div>
+          </div>
+        </label>
+      </div>
+
       <div>
         <h3 className="text-[10px] md:text-xs font-black text-zinc-500 uppercase tracking-[0.3em] mb-6">Departments</h3>
         <div className="flex flex-col gap-2">
-          {/* ✨ MAP OVER DYNAMIC CATEGORIES ✨ */}
           {categories.map((category) => {
             const count = getCategoryCount(category);
-            const isActive = activeCategory === category;
+            const isActive = activeCategory === category && !saleOnly; // Deselect if sale is active
             return (
               <button
                 key={category}
-                onClick={() => { setActiveCategory(category); setShowMobileFilters(false); }}
+                onClick={() => { setActiveCategory(category); setSaleOnly(false); setShowMobileFilters(false); }}
                 className={`group flex items-center justify-between text-left px-5 py-3 rounded-2xl transition-all duration-300 text-sm md:text-base font-bold uppercase tracking-widest ${
                   isActive ? "bg-purple-600/10 border border-purple-500/30 text-purple-400" : "text-zinc-400 hover:text-white hover:bg-zinc-800/50 border border-transparent"
                 }`}
@@ -162,7 +170,7 @@ function MarketContent() {
           </div>
         </label>
       </div>
-      <button onClick={() => { setMinPrice(""); setMaxPrice(""); setInStockOnly(false); setActiveCategory("All"); setShowMobileFilters(false); }} className="w-full py-4 bg-transparent border border-zinc-800 text-zinc-400 text-[10px] md:text-xs font-black uppercase tracking-[0.3em] rounded-xl hover:bg-white hover:text-black transition-all duration-300">
+      <button onClick={() => { setMinPrice(""); setMaxPrice(""); setInStockOnly(false); setSaleOnly(false); setActiveCategory("All"); setShowMobileFilters(false); }} className="w-full py-4 bg-transparent border border-zinc-800 text-zinc-400 text-[10px] md:text-xs font-black uppercase tracking-[0.3em] rounded-xl hover:bg-white hover:text-black transition-all duration-300">
         Reset Filters
       </button>
     </div>
@@ -235,9 +243,7 @@ function MarketContent() {
             {loading ? (
               <div className={`grid gap-4 md:gap-6 ${getGridClass()}`}>
                 {[1, 2, 3, 4, 5, 6].map((skeleton) => (
-                  <div key={skeleton} className="bg-zinc-900/40 border border-white/5 rounded-[2rem] h-[400px] animate-pulse p-6 flex flex-col justify-end">
-                    <div className="w-20 h-3 bg-zinc-800 rounded mb-4"></div><div className="w-full h-6 bg-zinc-800 rounded mb-4"></div><div className="w-32 h-6 bg-zinc-800 rounded"></div>
-                  </div>
+                  <div key={skeleton} className="bg-zinc-900/40 border border-white/5 rounded-[2rem] h-[400px] animate-pulse p-6 flex flex-col justify-end"></div>
                 ))}
               </div>
             ) : displayedProducts.length === 0 ? (
@@ -245,55 +251,72 @@ function MarketContent() {
                 <div className="w-20 h-20 mx-auto mb-6 bg-white/5 rounded-full flex items-center justify-center text-zinc-500"><svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
                 <h3 className="text-3xl font-black text-white mb-4 tracking-tighter uppercase">Asset Not Found</h3>
                 <p className="text-zinc-400 text-lg mb-10 font-light">No items match your current refined criteria.</p>
-                <button onClick={() => {setSearchQuery(""); setActiveCategory("All"); setSortBy("featured"); setMinPrice(""); setMaxPrice(""); setInStockOnly(false);}} className="px-10 py-5 bg-white text-black hover:bg-purple-600 hover:text-white font-black text-xs md:text-sm uppercase tracking-[0.3em] rounded-none transition-all duration-300">Reset Catalog</button>
+                <button onClick={() => {setSearchQuery(""); setActiveCategory("All"); setSortBy("featured"); setMinPrice(""); setMaxPrice(""); setInStockOnly(false); setSaleOnly(false);}} className="px-10 py-5 bg-white text-black hover:bg-purple-600 hover:text-white font-black text-xs md:text-sm uppercase tracking-[0.3em] rounded-none transition-all duration-300">Reset Catalog</button>
               </div>
             ) : (
               <div className={`grid gap-4 md:gap-6 ${getGridClass()}`}>
-                {displayedProducts.map((product) => (
-                  <div key={product.id} className={`group bg-zinc-900/40 backdrop-blur-xl border border-white/5 rounded-[2rem] md:rounded-[2.5rem] overflow-hidden flex flex-col transition-all duration-500 hover:border-purple-500/40 hover:shadow-[0_0_50px_rgba(147,51,234,0.15)] relative ${gridLayout === 1 ? 'flex-row h-48 md:h-64' : ''}`}>
-                    <div className={`relative bg-black overflow-hidden flex items-center justify-center p-6 md:p-8 ${gridLayout === 1 ? 'w-40 md:w-64 h-full shrink-0' : 'w-full aspect-[4/5] sm:aspect-square md:aspect-[4/5]'}`}>
-                      {product.image && <img src={product.image} alt={product.name} className="absolute inset-0 w-full h-full object-contain p-6 transition-all duration-1000 group-hover:scale-110" />}
-                      <div className="absolute inset-0 bg-gradient-to-tr from-purple-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                {displayedProducts.map((product) => {
+                  const isOnSale = product.original_price && product.original_price > product.price;
+                  
+                  return (
+                    <div key={product.id} className={`group bg-zinc-900/40 backdrop-blur-xl border border-white/5 rounded-[2rem] md:rounded-[2.5rem] overflow-hidden flex flex-col transition-all duration-500 hover:border-purple-500/40 hover:shadow-[0_0_50px_rgba(147,51,234,0.15)] relative ${gridLayout === 1 ? 'flex-row h-48 md:h-64' : ''}`}>
+                      <div className={`relative bg-black overflow-hidden flex items-center justify-center p-6 md:p-8 ${gridLayout === 1 ? 'w-40 md:w-64 h-full shrink-0' : 'w-full aspect-[4/5] sm:aspect-square md:aspect-[4/5]'}`}>
+                        {product.image && <img src={product.image} alt={product.name} className="absolute inset-0 w-full h-full object-contain p-6 transition-all duration-1000 group-hover:scale-110" />}
+                        <div className="absolute inset-0 bg-gradient-to-tr from-purple-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
 
-                      <div className="absolute top-4 left-4 md:top-6 md:left-6 z-10 flex flex-col gap-2">
-                        {product.tag && <span className="px-3 md:px-4 py-1.5 bg-white text-black text-[8px] md:text-[10px] font-black uppercase tracking-[0.3em] rounded-full shadow-2xl">{product.tag}</span>}
-                        {product.stock <= 5 && product.stock > 0 && <span className="px-3 md:px-4 py-1.5 bg-red-500 text-white text-[8px] md:text-[10px] font-black uppercase tracking-[0.3em] rounded-full shadow-2xl animate-pulse">Rare Asset</span>}
-                        {product.stock === 0 && <span className="px-3 md:px-4 py-1.5 bg-zinc-800 text-zinc-400 text-[8px] md:text-[10px] font-black uppercase tracking-[0.3em] rounded-full shadow-2xl">Vaulted</span>}
+                        <div className="absolute top-4 left-4 md:top-6 md:left-6 z-10 flex flex-col gap-2">
+                          {/* ✨ RED SALE BADGE ✨ */}
+                          {isOnSale && <span className="px-3 md:px-4 py-1.5 bg-red-500 text-white text-[8px] md:text-[10px] font-black uppercase tracking-[0.3em] rounded-full shadow-2xl animate-pulse">Sale</span>}
+                          
+                          {product.tag && !isOnSale && <span className="px-3 md:px-4 py-1.5 bg-white text-black text-[8px] md:text-[10px] font-black uppercase tracking-[0.3em] rounded-full shadow-2xl">{product.tag}</span>}
+                          {product.stock <= 5 && product.stock > 0 && <span className="px-3 md:px-4 py-1.5 bg-orange-500 text-white text-[8px] md:text-[10px] font-black uppercase tracking-[0.3em] rounded-full shadow-2xl">Rare Asset</span>}
+                          {product.stock === 0 && <span className="px-3 md:px-4 py-1.5 bg-zinc-800 text-zinc-400 text-[8px] md:text-[10px] font-black uppercase tracking-[0.3em] rounded-full shadow-2xl">Vaulted</span>}
+                        </div>
+                        
+                        <div className="absolute inset-0 bg-black/30 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity duration-500 hidden lg:flex items-center justify-center z-20">
+                          <button 
+                            disabled={product.stock === 0}
+                            onClick={(e) => handleSecureItem(e, product)}
+                            className="translate-y-8 group-hover:translate-y-0 transition-all duration-500 px-8 py-5 bg-white text-black font-black text-[10px] uppercase tracking-[0.3em] rounded-none hover:bg-purple-600 hover:text-white shadow-2xl disabled:opacity-0"
+                          >
+                            {product.stock === 0 ? 'Unavailable' : 'Secure Item'}
+                          </button>
+                        </div>
                       </div>
-                      
-                      <div className="absolute inset-0 bg-black/30 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity duration-500 hidden lg:flex items-center justify-center z-20">
-                        <button 
-                          disabled={product.stock === 0}
-                          onClick={(e) => handleSecureItem(e, product)}
-                          className="translate-y-8 group-hover:translate-y-0 transition-all duration-500 px-8 py-5 bg-white text-black font-black text-[10px] uppercase tracking-[0.3em] rounded-none hover:bg-purple-600 hover:text-white shadow-2xl disabled:opacity-0"
-                        >
-                          {product.stock === 0 ? 'Unavailable' : 'Secure Item'}
-                        </button>
+
+                      <div className={`p-5 md:p-8 flex flex-col flex-1 relative z-10 ${gridLayout === 1 ? 'justify-center' : ''}`}>
+                        <div className="flex justify-between items-start mb-3">
+                          <p className="text-[9px] md:text-[10px] text-purple-400 font-bold uppercase tracking-[0.4em]">{product.category}</p>
+                        </div>
+                        
+                        <Link href={`/market/${product.id}`} className="block group/title mb-4 md:mb-6">
+                          <h3 className={`font-black text-white group-hover/title:text-purple-400 transition-colors uppercase tracking-tight leading-snug ${gridLayout === 2 ? 'text-lg md:text-2xl line-clamp-2' : 'text-2xl md:text-3xl line-clamp-1'}`}>{product.name}</h3>
+                        </Link>
+                        
+                        <div className="mt-auto flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <p className={`font-light ${isOnSale ? 'text-red-400 font-bold' : 'text-zinc-300'} tracking-wider ${gridLayout === 2 ? 'text-xl md:text-2xl' : 'text-2xl md:text-3xl'}`}>Rs. {product.price.toLocaleString()}</p>
+                            
+                            {/* ✨ CROSSED OUT ORIGINAL PRICE ✨ */}
+                            {isOnSale && (
+                              <p className="text-sm md:text-base text-zinc-500 line-through tracking-wider">
+                                Rs. {product.original_price?.toLocaleString()}
+                              </p>
+                            )}
+                          </div>
+
+                          <button 
+                            disabled={product.stock === 0}
+                            onClick={(e) => handleSecureItem(e, product)}
+                            className="lg:hidden w-10 h-10 md:w-12 md:h-12 bg-white rounded-full flex items-center justify-center text-black hover:bg-purple-600 hover:text-white transition-colors disabled:opacity-50 shrink-0"
+                          >
+                            <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path></svg>
+                          </button>
+                        </div>
                       </div>
                     </div>
-
-                    <div className={`p-5 md:p-8 flex flex-col flex-1 relative z-10 ${gridLayout === 1 ? 'justify-center' : ''}`}>
-                      <div className="flex justify-between items-start mb-3">
-                        <p className="text-[9px] md:text-[10px] text-purple-400 font-bold uppercase tracking-[0.4em]">{product.category}</p>
-                      </div>
-                      
-                      <Link href={`/market/${product.id}`} className="block group/title mb-4 md:mb-6">
-                        <h3 className={`font-black text-white group-hover/title:text-purple-400 transition-colors uppercase tracking-tight leading-snug ${gridLayout === 2 ? 'text-lg md:text-2xl line-clamp-2' : 'text-2xl md:text-3xl line-clamp-1'}`}>{product.name}</h3>
-                      </Link>
-                      
-                      <div className="mt-auto flex items-center justify-between">
-                        <p className={`font-light text-zinc-300 tracking-wider ${gridLayout === 2 ? 'text-xl md:text-2xl' : 'text-2xl md:text-3xl'}`}>Rs. {product.price.toLocaleString()}</p>
-                        <button 
-                          disabled={product.stock === 0}
-                          onClick={(e) => handleSecureItem(e, product)}
-                          className="lg:hidden w-10 h-10 md:w-12 md:h-12 bg-white rounded-full flex items-center justify-center text-black hover:bg-purple-600 hover:text-white transition-colors disabled:opacity-50"
-                        >
-                          <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path></svg>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </main>

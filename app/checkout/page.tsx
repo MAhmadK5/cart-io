@@ -72,12 +72,34 @@ export default function CheckoutPage() {
             subtotal: subtotal,
             shipping_fee: shipping,
             total_amount: total,
-            items: cartItems, // Automatically includes color, customText, note
+            items: cartItems, 
             status: 'Processing'
           }
         ]);
 
       if (error) throw error;
+
+      // ==========================================
+      // ✨ STEP 4: TRIGGER THE EMAIL API ✨
+      // ==========================================
+      try {
+        await fetch('/api/send-receipt', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: formData.email, 
+            name: customerName,
+            orderId: newOrderId, 
+            items: cartItems, 
+            total: total, 
+            shippingAddress: `${formData.address}, ${formData.city}, Pakistan ${formData.postalCode ? `(${formData.postalCode})` : ''}`
+          }),
+        });
+        console.log("Digital receipt dispatched to client.");
+      } catch (emailErr) {
+        console.error("Failed to send digital receipt, but order was secured.", emailErr);
+      }
+      // ==========================================
 
       setCompletedOrder({
         id: newOrderId,
@@ -154,7 +176,6 @@ export default function CheckoutPage() {
                           <div>
                             <p className="text-xl md:text-2xl font-bold text-white print:text-black line-clamp-1 leading-none mb-1.5">{item.name}</p>
                             
-                            {/* ✨ NEW: ROBUST DISPLAY COLORS & NOTES/ENGRAVING ON RECEIPT ✨ */}
                             {(item.color || item.customText || item.note) && (
                               <div className="flex flex-col gap-0.5 mb-1.5">
                                 {item.color && (
@@ -344,7 +365,6 @@ export default function CheckoutPage() {
                       <div className="flex-1">
                         <h4 className="text-xl font-bold text-white uppercase tracking-tight line-clamp-2 mb-1.5 leading-tight">{item.name}</h4>
                         
-                        {/* ✨ NEW: ROBUST DISPLAY COLORS & NOTES IN SUMMARY ✨ */}
                         {(item.color || item.customText || item.note) && (
                           <div className="flex flex-col gap-1 mb-3 border-l-2 border-purple-500/30 pl-3">
                             {item.color && (

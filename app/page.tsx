@@ -31,10 +31,13 @@ export default function Home() {
   const [trendingProducts, setTrendingProducts] = useState<Product[]>([]);
   const [limitedDrop, setLimitedDrop] = useState<Product | null>(null);
   
-  // ✨ NEW: Changed to an Array for the dynamic carousel ✨
+  // ✨ CAROUSEL STATE ✨
   const [featuredLandscapes, setFeaturedLandscapes] = useState<Product[]>([]);
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
   
+  // ✨ NEW: SALE BANNER STATE ✨
+  const [saleBanner, setSaleBanner] = useState<any>(null);
+
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -60,7 +63,7 @@ export default function Home() {
     return () => clearInterval(timer);
   }, []);
 
-  // ✨ NEW: Auto-Rotate Banner Every 5 Seconds ✨
+  // Auto-Rotate Banner Every 5 Seconds
   useEffect(() => {
     if (featuredLandscapes.length <= 1) return;
     
@@ -89,13 +92,21 @@ export default function Home() {
           .limit(1);
         if (dropData && dropData.length > 0) setLimitedDrop(dropData[0]);
 
-        // ✨ UPDATED: Fetch top 3 featured products for the banner ✨
         const { data: featuredData } = await supabase
           .from('products')
           .select('*')
           .order('price', { ascending: false }) 
           .limit(3);
         if (featuredData && featuredData.length > 0) setFeaturedLandscapes(featuredData);
+
+        // ✨ NEW: FETCH ACTIVE PROMOTIONAL BANNER ✨
+        const { data: promoData } = await supabase
+          .from('promotional_banners')
+          .select('*')
+          .eq('is_active', true)
+          .order('created_at', { ascending: false })
+          .limit(1);
+        if (promoData && promoData.length > 0) setSaleBanner(promoData[0]);
 
         const { data: reviewsData } = await supabase
           .from('reviews')
@@ -172,6 +183,36 @@ export default function Home() {
         </div>
       </div>
 
+      {/* ✨ NEW: DYNAMIC SALE BANNER (Only renders if active promotion exists) ✨ */}
+      {saleBanner && (
+        <div className="relative z-20 w-full px-4 sm:px-8 pb-16 max-w-[1600px] mx-auto animate-fade-in mt-8 md:mt-0">
+          {/* ✨ FIXED: Increased md height to 400px and lg height to 600px ✨ */}
+          <Link href={saleBanner.link || "/market"} className="block relative w-full h-[200px] md:h-[400px] lg:h-[600px] rounded-2xl md:rounded-[2.5rem] overflow-hidden group border border-purple-500 shadow-[0_0_50px_rgba(249,115,22,0.15)] bg-zinc-900">
+            
+            <img 
+              src={saleBanner.image} 
+              alt={saleBanner.title} 
+              className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000" 
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/40 to-transparent"></div>
+            
+            <div className="absolute inset-0 flex flex-col justify-center p-6 md:p-16">
+              <span className="w-max px-3 py-1 mb-3 md:mb-6 bg-red-700 text-white font-black uppercase tracking-[0.3em] text-[8px] md:text-[10px] rounded-full shadow-[0_0_20px_rgba(249,115,22,0.5)] animate-pulse">
+                Live Promotion
+              </span>
+              {/* ✨ Scaled up text to md:text-7xl and lg:text-8xl to match the new height ✨ */}
+              <h2 className="text-3xl sm:text-5xl md:text-7xl lg:text-8xl font-black text-white uppercase tracking-tighter leading-none max-w-4xl drop-shadow-2xl">
+                {saleBanner.title}
+              </h2>
+              <div className="mt-8 hidden md:flex items-center gap-3 text-purple-600 font-bold uppercase tracking-widest text-sm group-hover:text-white transition-colors">
+                Claim Offer <svg className="w-5 h-5 group-hover:translate-x-2 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+              </div>
+            </div>
+          </Link>
+        </div>
+      )}
+    
+
       {/* --- ✨ DB-DRIVEN LANDSCAPE CAROUSEL ✨ --- */}
       <div className="relative z-10 w-full px-4 sm:px-8 pb-16">
         {loading ? (
@@ -243,7 +284,7 @@ export default function Home() {
               </span>
               <svg className="w-8 h-8 text-purple-500 animate-[spin_4s_linear_infinite]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path></svg>
               <span className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter mx-8 drop-shadow-[0_0_15px_rgba(255,255,255,0.3)] cursor-default">
-                LAHORE
+                Sale
               </span>
               <svg className="w-8 h-8 text-purple-500 animate-[spin_4s_linear_infinite]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path></svg>
             </div>

@@ -88,9 +88,14 @@ export default function FAQPage() {
       <div className="mt-20 p-8 bg-gradient-to-br from-blue-900/20 to-orange-900/20 border border-white/10 rounded-3xl text-center backdrop-blur-sm">
         <h3 className="text-xl font-black text-white mb-2 tracking-widest uppercase">Still need help?</h3>
         <p className="text-zinc-400 text-sm mb-6">Our Support Desks are online 12 hours-Replies in 20-30 mintues to assist you.</p>
-        <Link href="/" className="inline-block px-8 py-4 bg-white text-black font-black text-xs uppercase tracking-[0.2em] rounded-xl hover:bg-orange-500 hover:text-white transition-all shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:shadow-[0_0_30px_rgba(249,115,22,0.4)]">
+        
+        {/* ✨ FIXED: Replaced Next.js <Link> with a native <a> tag mapped to your email! ✨ */}
+        <a 
+          href="mailto:pkcartio@gmail.com" 
+          className="inline-block px-8 py-4 bg-white text-black font-black text-xs uppercase tracking-[0.2em] rounded-xl hover:bg-orange-500 hover:text-white transition-all shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:shadow-[0_0_30px_rgba(249,115,22,0.4)]"
+        >
           Contact Support
-        </Link>
+        </a>
       </div>
       
     </div>
