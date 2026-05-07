@@ -26,7 +26,7 @@ export default function CheckoutPage() {
   const [completedOrder, setCompletedOrder] = useState<any>(null);
 
   // ✨ UPDATED: Complimentary shipping threshold raised to Rs. 3000 ✨
-  const shipping = cartItems.length > 0 ? (subtotal >= 3000 ? 0 : 250) : 0; 
+  const shipping = cartItems.length > 0 ? (subtotal >= 3000 ? 0 : 300) : 0; 
   const total = subtotal + shipping;
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {

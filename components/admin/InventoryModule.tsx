@@ -31,9 +31,10 @@ export default function InventoryModule() {
   const [productImages, setProductImages] = useState<string[]>([]);
   const [activePreviewImage, setActivePreviewImage] = useState<string>("");
 
-  // ✨ ADDED original_price TO FORM ✨
+  // ✨ NEW: VISUAL COLOR ENGINE STATES ✨
+  const [tempColor, setTempColor] = useState("");
   const [productForm, setProductForm] = useState({
-    name: '', price: '', original_price: '', category: '', tag: '', stock: '', description: '', colors: '', allowCustomText: false
+    name: '', price: '', original_price: '', category: '', tag: '', stock: '', description: '', colors: [] as string[], allowCustomText: false
   });
 
   // --- CATEGORY STATES ---
@@ -54,7 +55,7 @@ export default function InventoryModule() {
   useEffect(() => {
     fetchInventory();
     fetchCategories();
-    fetchPromotions();
+    fetchPromotions(); 
   }, []);
 
   useEffect(() => {
@@ -197,18 +198,19 @@ export default function InventoryModule() {
       return;
     }
     setEditingId(null);
-    // ✨ ADDED original_price ✨
+    // ✨ Initialize colors as empty array ✨
     setProductForm({ 
-      name: '', price: '', original_price: '', category: categories[0].name, tag: '', stock: '', description: '', colors: '', allowCustomText: false 
+      name: '', price: '', original_price: '', category: categories[0].name, tag: '', stock: '', description: '', colors: [], allowCustomText: false 
     });
     setProductImages([]);
     setTempImageUrl('');
+    setTempColor('');
     setIsProductModalOpen(true);
   };
 
   const openEditProductModal = (product: any) => {
     setEditingId(product.id);
-    // ✨ ADDED original_price ✨
+    // ✨ Load colors directly into the array ✨
     setProductForm({
       name: product.name, 
       price: String(product.price), 
@@ -217,11 +219,12 @@ export default function InventoryModule() {
       tag: product.tag || '', 
       stock: String(product.stock), 
       description: product.description, 
-      colors: product.colors ? product.colors.join(', ') : '', 
+      colors: product.colors || [], 
       allowCustomText: product.allowCustomText || false
     });
     setProductImages(product.gallery?.length ? product.gallery : (product.image ? [product.image] : []));
     setTempImageUrl('');
+    setTempColor('');
     setIsProductModalOpen(true);
   };
 
@@ -243,6 +246,18 @@ export default function InventoryModule() {
     setProductImages(productImages.filter((_, idx) => idx !== indexToRemove));
   };
 
+  // ✨ NEW: VISUAL COLOR CONTROLLERS ✨
+  const handleAddColor = () => {
+    if (tempColor.trim() && !productForm.colors.includes(tempColor.trim())) {
+      setProductForm({ ...productForm, colors: [...productForm.colors, tempColor.trim()] });
+      setTempColor("");
+    }
+  };
+
+  const handleRemoveColor = (colorToRemove: string) => {
+    setProductForm({ ...productForm, colors: productForm.colors.filter(c => c !== colorToRemove) });
+  };
+
   const handleSaveProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     if (productImages.length === 0) {
@@ -252,9 +267,6 @@ export default function InventoryModule() {
     
     setIsSubmittingProduct(true);
     try {
-      const colorsArray = productForm.colors.trim() ? productForm.colors.split(',').map(c => c.trim()).filter(c => c !== '') : null;
-
-      // ✨ UPDATED PAYLOAD TO INCLUDE original_price ✨
       const payload = {
         name: productForm.name, 
         price: Number(productForm.price), 
@@ -265,7 +277,7 @@ export default function InventoryModule() {
         description: productForm.description, 
         image: productImages[0], 
         gallery: productImages, 
-        colors: colorsArray, 
+        colors: productForm.colors.length > 0 ? productForm.colors : null, 
         allowCustomText: productForm.allowCustomText, 
         rating: 5.0, 
         reviews: 0, 
@@ -294,45 +306,16 @@ export default function InventoryModule() {
         <div>
           <h1 className="text-5xl md:text-6xl font-black text-white tracking-tighter uppercase">Operations</h1>
           
-          {/* TAB NAVIGATION */}
           <div className="flex gap-4 mt-6 flex-wrap">
-            <button 
-              onClick={() => setActiveTab('products')} 
-              className={`px-6 py-2 rounded-full text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'products' ? 'bg-purple-600 text-white shadow-[0_0_15px_rgba(147,51,234,0.5)]' : 'bg-zinc-900 text-zinc-500 hover:text-white border border-white/5'}`}
-            >
-              ITEMS
-            </button>
-            <button 
-              onClick={() => setActiveTab('categories')} 
-              className={`px-6 py-2 rounded-full text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'categories' ? 'bg-purple-600 text-white shadow-[0_0_15px_rgba(147,51,234,0.5)]' : 'bg-zinc-900 text-zinc-500 hover:text-white border border-white/5'}`}
-            >
-              Categories
-            </button>
-            <button 
-              onClick={() => setActiveTab('promotions')} 
-              className={`px-6 py-2 rounded-full text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'promotions' ? 'bg-purple-600 text-white shadow-[0_0_15px_rgba(147,51,234,0.5)]' : 'bg-zinc-900 text-zinc-500 hover:text-white border border-white/5'}`}
-            >
-              Promotions
-            </button>
+            <button onClick={() => setActiveTab('products')} className={`px-6 py-2 rounded-full text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'products' ? 'bg-purple-600 text-white shadow-[0_0_15px_rgba(147,51,234,0.5)]' : 'bg-zinc-900 text-zinc-500 hover:text-white border border-white/5'}`}>ITEMS</button>
+            <button onClick={() => setActiveTab('categories')} className={`px-6 py-2 rounded-full text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'categories' ? 'bg-purple-600 text-white shadow-[0_0_15px_rgba(147,51,234,0.5)]' : 'bg-zinc-900 text-zinc-500 hover:text-white border border-white/5'}`}>Categories</button>
+            <button onClick={() => setActiveTab('promotions')} className={`px-6 py-2 rounded-full text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'promotions' ? 'bg-purple-600 text-white shadow-[0_0_15px_rgba(147,51,234,0.5)]' : 'bg-zinc-900 text-zinc-500 hover:text-white border border-white/5'}`}>Promotions</button>
           </div>
         </div>
         
-        {/* Dynamic Context Button */}
-        {activeTab === 'products' && (
-          <button onClick={openAddProductModal} className="flex items-center gap-3 px-8 py-5 bg-white text-black hover:bg-purple-600 hover:text-white rounded-2xl font-black text-sm uppercase tracking-[0.2em] transition-all shadow-xl">
-            Add New ITEM
-          </button>
-        )}
-        {activeTab === 'categories' && (
-          <button onClick={openAddCategoryModal} className="flex items-center gap-3 px-8 py-5 bg-zinc-800 text-white hover:bg-white hover:text-black rounded-2xl font-black text-sm uppercase tracking-[0.2em] transition-all shadow-xl border border-white/10">
-            Create a new Category
-          </button>
-        )}
-        {activeTab === 'promotions' && (
-          <button onClick={() => setIsPromoModalOpen(true)} className="flex items-center gap-3 px-8 py-5 bg-orange-500 text-white hover:bg-white hover:text-black rounded-2xl font-black text-sm uppercase tracking-[0.2em] transition-all shadow-[0_0_20px_rgba(249,115,22,0.3)]">
-            Deploy Sale Banner
-          </button>
-        )}
+        {activeTab === 'products' && <button onClick={openAddProductModal} className="flex items-center gap-3 px-8 py-5 bg-white text-black hover:bg-purple-600 hover:text-white rounded-2xl font-black text-sm uppercase tracking-[0.2em] transition-all shadow-xl">Add New ITEM</button>}
+        {activeTab === 'categories' && <button onClick={openAddCategoryModal} className="flex items-center gap-3 px-8 py-5 bg-zinc-800 text-white hover:bg-white hover:text-black rounded-2xl font-black text-sm uppercase tracking-[0.2em] transition-all shadow-xl border border-white/10">Create a new Category</button>}
+        {activeTab === 'promotions' && <button onClick={() => setIsPromoModalOpen(true)} className="flex items-center gap-3 px-8 py-5 bg-orange-500 text-white hover:bg-white hover:text-black rounded-2xl font-black text-sm uppercase tracking-[0.2em] transition-all shadow-[0_0_20px_rgba(249,115,22,0.3)]">Deploy Sale Banner</button>}
       </div>
 
       {/* ========================================= */}
@@ -352,7 +335,6 @@ export default function InventoryModule() {
                     <img src={product.image} className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-700" />
                     <div className="absolute top-4 left-4 bg-white text-black text-[10px] font-black uppercase px-3 py-1 rounded-full shadow-lg">{product.category}</div>
                     
-                    {/* ✨ SALE BADGE IN GRID PREVIEW ✨ */}
                     {product.original_price && product.original_price > product.price && (
                       <div className="absolute top-4 right-4 bg-red-500 text-white text-[10px] font-black uppercase px-3 py-1 rounded-full shadow-lg animate-pulse">SALE</div>
                     )}
@@ -360,12 +342,18 @@ export default function InventoryModule() {
                   <div className="p-6 md:p-8 flex flex-col flex-1">
                     <h3 className="text-2xl font-black text-white uppercase tracking-tight mb-2 truncate">{product.name}</h3>
                     
-                    <div className="flex items-center gap-3 mb-6">
+                    <div className="flex items-center gap-3 mb-4">
                       <p className="text-xl text-purple-400 font-light">Rs. {product.price.toLocaleString()}</p>
-                      {/* ✨ SHOW ORIGINAL PRICE CROSSED OUT ✨ */}
                       {product.original_price && product.original_price > product.price && (
                         <p className="text-sm text-zinc-500 line-through">Rs. {product.original_price.toLocaleString()}</p>
                       )}
+                    </div>
+
+                    {/* ✨ ADMIN GRID COLOR PREVIEW ✨ */}
+                    <div className="flex items-center gap-1.5 mb-6">
+                      {product.colors && product.colors.map((c: string, i: number) => (
+                        <span key={i} className="w-3 h-3 rounded-full border border-white/20" style={{ backgroundColor: c }}></span>
+                      ))}
                     </div>
 
                     <div className="mt-auto flex justify-between items-center border-t border-white/5 pt-6">
@@ -406,9 +394,7 @@ export default function InventoryModule() {
                     <p className="text-xs text-zinc-500 font-bold uppercase tracking-widest">{productCount} Assets Active</p>
                   </div>
                   <div className="flex gap-2">
-                    <button onClick={() => openEditCategoryModal(cat)} className="flex-1 py-3 bg-white/5 hover:bg-white hover:text-black text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
-                      Edit
-                    </button>
+                    <button onClick={() => openEditCategoryModal(cat)} className="flex-1 py-3 bg-white/5 hover:bg-white hover:text-black text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">Edit</button>
                     <button onClick={() => handleDeleteCategory(cat)} className="w-12 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white rounded-xl flex items-center justify-center transition-all" title="Nuke Category & Products">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                     </button>
@@ -458,7 +444,6 @@ export default function InventoryModule() {
           <div className="absolute inset-0 bg-black/90 backdrop-blur-sm" onClick={() => setIsCategoryModalOpen(false)}></div>
           <div className="relative bg-zinc-950 border border-white/10 rounded-[2rem] w-full max-w-md p-8 shadow-2xl">
             <h2 className="text-2xl font-black text-white uppercase tracking-tighter mb-6">{editingCategory ? 'Edit Department' : 'New Department'}</h2>
-            {editingCategory && <p className="text-xs text-amber-500 mb-6 bg-amber-500/10 p-3 rounded-lg border border-amber-500/20 leading-relaxed font-bold tracking-wide">Warning: Renaming this department will instantly update all corresponding assets in your inventory to the new name.</p>}
             
             <form onSubmit={handleSaveCategory} className="space-y-6">
               <div>
@@ -536,7 +521,6 @@ export default function InventoryModule() {
                   <span className="text-sm font-bold text-zinc-600 uppercase tracking-widest">Add an image URL</span>
                 )}
                 
-                {/* ✨ SALE BADGE IN MODAL PREVIEW ✨ */}
                 {productForm.original_price && Number(productForm.original_price) > Number(productForm.price) && (
                   <div className="absolute top-6 right-6 bg-red-500 text-white text-[10px] font-black uppercase px-3 py-1 rounded-full shadow-lg animate-pulse z-20">SALE</div>
                 )}
@@ -548,11 +532,20 @@ export default function InventoryModule() {
                   
                   <div className="flex items-center gap-3">
                     <p className="text-xl text-white font-light">Rs. {productForm.price || '0'}</p>
-                    {/* ✨ SHOW ORIGINAL PRICE CROSSED OUT IN PREVIEW ✨ */}
                     {productForm.original_price && Number(productForm.original_price) > Number(productForm.price) && (
                       <p className="text-sm text-zinc-500 line-through">Rs. {productForm.original_price}</p>
                     )}
                   </div>
+
+                  {/* ✨ VISUAL COLOR PREVIEW ✨ */}
+                  {productForm.colors.length > 0 && (
+                    <div className="flex gap-2 mt-4">
+                      {productForm.colors.map(c => (
+                        <span key={c} className="w-4 h-4 rounded-full border border-white/20 shadow-md" style={{ backgroundColor: c }}></span>
+                      ))}
+                    </div>
+                  )}
+
                 </div>
               </div>
 
@@ -581,12 +574,10 @@ export default function InventoryModule() {
                     <input required value={productForm.name} onChange={(e) => setProductForm({...productForm, name: e.target.value})} type="text" placeholder="Product Name" className="w-full bg-transparent border-b border-white/20 text-white text-xl py-4 focus:outline-none focus:border-purple-500 transition-colors placeholder:text-zinc-600 font-light rounded-none" />
                   </div>
                   
-                  {/* ✨ REGULAR PRICE ✨ */}
                   <div>
                     <input required value={productForm.price} onChange={(e) => setProductForm({...productForm, price: e.target.value})} type="number" placeholder="Sale Price (Rs.)" className="w-full bg-transparent border-b border-white/20 text-white text-xl py-4 focus:outline-none focus:border-purple-500 transition-colors placeholder:text-zinc-600 font-light rounded-none" />
                   </div>
 
-                  {/* ✨ NEW: ORIGINAL PRICE ✨ */}
                   <div>
                     <input value={productForm.original_price} onChange={(e) => setProductForm({...productForm, original_price: e.target.value})} type="number" placeholder="Original Price (Optional)" className="w-full bg-transparent border-b border-white/20 text-zinc-400 text-xl py-4 focus:outline-none focus:border-red-500 transition-colors font-light rounded-none placeholder:text-zinc-600" />
                     <p className="text-[10px] text-zinc-500 mt-2 italic">Fill this higher than Sale Price to put item on SALE</p>
@@ -596,7 +587,6 @@ export default function InventoryModule() {
                     <input required value={productForm.stock} onChange={(e) => setProductForm({...productForm, stock: e.target.value})} type="number" placeholder="Inventory Count" className="w-full bg-transparent border-b border-white/20 text-white text-xl py-4 focus:outline-none focus:border-purple-500 transition-colors placeholder:text-zinc-600 font-light rounded-none" />
                   </div>
 
-                  {/* Clean Category Select */}
                   <div>
                     <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-2 block">Department</label>
                     <select required value={productForm.category} onChange={(e) => setProductForm({...productForm, category: e.target.value})} className="w-full bg-black/50 border border-white/10 text-white text-lg px-5 py-4 focus:outline-none focus:border-purple-500 transition-colors rounded-xl cursor-pointer appearance-none">
@@ -608,8 +598,27 @@ export default function InventoryModule() {
                     <input value={productForm.tag} onChange={(e) => setProductForm({...productForm, tag: e.target.value})} type="text" placeholder="Special Tag (e.g. Rare)" className="w-full bg-transparent border-b border-white/20 text-white text-xl py-4 focus:outline-none focus:border-purple-500 transition-colors placeholder:text-zinc-600 font-light rounded-none" />
                   </div>
 
-                  <div className="md:col-span-2">
-                    <input value={productForm.colors} onChange={(e) => setProductForm({...productForm, colors: e.target.value})} type="text" placeholder="Colors (Comma separated e.g. #000000, white, gold)" className="w-full bg-transparent border-b border-white/20 text-white text-xl py-4 focus:outline-none focus:border-purple-500 transition-colors placeholder:text-zinc-600 font-light rounded-none" />
+                  {/* ✨ NEW VISUAL COLOR SELECTOR ✨ */}
+                  <div className="md:col-span-2 bg-zinc-900/40 p-6 rounded-2xl border border-white/5">
+                    <p className="text-xs font-bold text-purple-400 uppercase tracking-widest mb-4">Available Colors</p>
+                    <div className="flex gap-4 mb-4">
+                      <input 
+                        value={tempColor} onChange={(e) => setTempColor(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddColor(); }}}
+                        type="text" placeholder="Hex (#FF0000) or Name (black)" className="flex-1 bg-black/50 border border-white/10 text-white text-lg px-6 py-4 focus:outline-none focus:border-purple-500 transition-colors rounded-xl font-light" 
+                      />
+                      <button type="button" onClick={handleAddColor} className="px-8 bg-purple-600 hover:bg-purple-500 text-white font-black uppercase tracking-widest rounded-xl transition-all text-xs">Add Color</button>
+                    </div>
+                    {productForm.colors.length > 0 && (
+                      <div className="flex flex-wrap gap-3">
+                        {productForm.colors.map(color => (
+                          <div key={color} className="flex items-center gap-2 bg-black border border-white/10 px-4 py-2 rounded-full">
+                            <span className="w-4 h-4 rounded-full border border-white/20" style={{ backgroundColor: color }}></span>
+                            <span className="text-xs text-white uppercase font-bold tracking-widest">{color}</span>
+                            <button type="button" onClick={() => handleRemoveColor(color)} className="text-red-500 ml-2 hover:text-red-400 font-bold">✕</button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                   
                   <div className="md:col-span-2">
