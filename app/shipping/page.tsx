@@ -56,7 +56,7 @@ export default function ShippingPolicyPage() {
                     <p className="text-sm">Estimated 3-5 Business Days</p>
                   </div>
                   <div>
-                    <p className="text-xs font-black text-purple-400 uppercase tracking-widest mb-1">Orders Over Rs. 3,000</p>
+                    <p className="text-xs font-black text-purple-400 uppercase tracking-widest mb-1">Orders Over Rs. 3,500</p>
                     <p className="text-3xl font-black text-white tracking-tighter mb-2">FREE</p>
                     <p className="text-sm">Complimentary Premium Delivery</p>
                   </div>

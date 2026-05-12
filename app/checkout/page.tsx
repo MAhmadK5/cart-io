@@ -25,12 +25,71 @@ export default function CheckoutPage() {
   const [orderSuccess, setOrderSuccess] = useState(false);
   const [completedOrder, setCompletedOrder] = useState<any>(null);
 
-  // ✨ UPDATED: Complimentary shipping threshold raised to Rs. 3000 ✨
-  const shipping = cartItems.length > 0 ? (subtotal >= 3000 ? 0 : 300) : 0; 
-  const total = subtotal + shipping;
+  // ✨ NEW: DISCOUNT CODE STATES ✨
+  const [promoCodeInput, setPromoCodeInput] = useState('');
+  const [appliedPromo, setAppliedPromo] = useState<any>(null);
+  const [discountAmount, setDiscountAmount] = useState(0);
+  const [promoError, setPromoError] = useState('');
+  const [isApplyingPromo, setIsApplyingPromo] = useState(false);
+
+  // ✨ UPDATED: Complimentary shipping threshold raised to Rs. 3500 ✨
+  const shipping = cartItems.length > 0 ? (subtotal >= 3500 ? 0 : 300) : 0; 
+  const total = Math.max(0, subtotal + shipping - discountAmount);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  // ✨ NEW: VALIDATE & APPLY PROMO CODE ✨
+  const handleApplyPromo = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPromoError('');
+    if (!promoCodeInput) return;
+    setIsApplyingPromo(true);
+
+    try {
+      const { data, error } = await supabase
+        .from('promo_codes')
+        .select('*')
+        .eq('code', promoCodeInput.toUpperCase())
+        .single();
+
+      if (error || !data) {
+        setPromoError('Invalid promo code.');
+        setIsApplyingPromo(false);
+        return;
+      }
+
+      if (!data.is_active) {
+        setPromoError('This code is no longer active.');
+        setIsApplyingPromo(false);
+        return;
+      }
+
+      if (subtotal < data.min_order_value) {
+        setPromoError(`Minimum order value of Rs. ${data.min_order_value} required.`);
+        setIsApplyingPromo(false);
+        return;
+      }
+
+      setAppliedPromo(data);
+      if (data.discount_type === 'percentage') {
+        setDiscountAmount(Math.round((subtotal * data.discount_value) / 100));
+      } else {
+        setDiscountAmount(data.discount_value);
+      }
+    } catch (err) {
+      setPromoError('Error verifying code.');
+    } finally {
+      setIsApplyingPromo(false);
+    }
+  };
+
+  const handleRemovePromo = () => {
+    setAppliedPromo(null);
+    setDiscountAmount(0);
+    setPromoCodeInput('');
+    setPromoError('');
   };
 
   if (cartItems.length === 0 && !orderSuccess) {
@@ -57,6 +116,7 @@ export default function CheckoutPage() {
       const newOrderId = "CIO-" + Math.random().toString(36).substring(2, 8).toUpperCase();
       const customerName = `${formData.firstName} ${formData.lastName}`.trim();
       
+      // 1. Save Order to Database
       const { error } = await supabase
         .from('orders')
         .insert([
@@ -71,6 +131,8 @@ export default function CheckoutPage() {
             payment_method: paymentMethod,
             subtotal: subtotal,
             shipping_fee: shipping,
+            discount_code: appliedPromo ? appliedPromo.code : null, // ✨ RECORD DISCOUNT ✨
+            discount_amount: discountAmount, // ✨ RECORD DISCOUNT ✨
             total_amount: total,
             items: cartItems, 
             status: 'Processing'
@@ -79,9 +141,15 @@ export default function CheckoutPage() {
 
       if (error) throw error;
 
-      // ==========================================
-      // ✨ STEP 4: TRIGGER THE EMAIL API ✨
-      // ==========================================
+      // 2. Increment Promo Code Usage (if used)
+      if (appliedPromo) {
+        await supabase
+          .from('promo_codes')
+          .update({ usage_count: appliedPromo.usage_count + 1 })
+          .eq('id', appliedPromo.id);
+      }
+
+      // 3. Trigger Email API
       try {
         await fetch('/api/send-receipt', {
           method: 'POST',
@@ -99,7 +167,6 @@ export default function CheckoutPage() {
       } catch (emailErr) {
         console.error("Failed to send digital receipt, but order was secured.", emailErr);
       }
-      // ==========================================
 
       setCompletedOrder({
         id: newOrderId,
@@ -109,6 +176,8 @@ export default function CheckoutPage() {
         items: [...cartItems],
         subtotal: subtotal,
         shipping: shipping,
+        discountCode: appliedPromo ? appliedPromo.code : null,
+        discountAmount: discountAmount,
         total: total,
         payment: paymentMethod
       });
@@ -127,7 +196,15 @@ export default function CheckoutPage() {
   // --- SUCCESS SCREEN WITH DIGITAL RECEIPT ---
   if (orderSuccess && completedOrder) {
     const waNumber = "923196514249";
-    const waMessage = encodeURIComponent(`Hello CARTIO! 🚀\n\nI just placed an order on your website.\n\n*Order ID:* ${completedOrder.id}\n*Name:* ${completedOrder.name}\n*Total:* Rs. ${completedOrder.total.toLocaleString()}\n\nPlease confirm my order!`);
+    
+    // ✨ UPDATED: Added discount line to WhatsApp message ✨
+    let waMessageText = `Hello CARTIO! 🚀\n\nI just placed an order on your website.\n\n*Order ID:* ${completedOrder.id}\n*Name:* ${completedOrder.name}\n`;
+    if (completedOrder.discountAmount > 0) {
+      waMessageText += `*Discount Applied:* ${completedOrder.discountCode} (-Rs. ${completedOrder.discountAmount.toLocaleString()})\n`;
+    }
+    waMessageText += `*Total:* Rs. ${completedOrder.total.toLocaleString()}\n\nPlease confirm my order!`;
+    
+    const waMessage = encodeURIComponent(waMessageText);
     const waLink = `https://wa.me/${waNumber}?text=${waMessage}`;
 
     return (
@@ -211,6 +288,15 @@ export default function CheckoutPage() {
                       {completedOrder.shipping === 0 ? 'Complimentary' : `Rs. ${completedOrder.shipping.toLocaleString()}`}
                     </span>
                   </div>
+
+                  {/* ✨ SHOW DISCOUNT ON RECEIPT ✨ */}
+                  {completedOrder.discountAmount > 0 && (
+                    <div className="flex justify-between text-xl text-purple-400 print:text-black font-bold tracking-wide">
+                      <span>Discount ({completedOrder.discountCode})</span>
+                      <span>- Rs. {completedOrder.discountAmount.toLocaleString()}</span>
+                    </div>
+                  )}
+
                   <div className="flex justify-between items-end pt-6 mt-4 border-t border-white/5 print:border-black/10">
                     <span className="text-lg font-black text-zinc-500 uppercase tracking-[0.3em] print:text-gray-500">Total Valuation</span>
                     <span className="text-5xl md:text-6xl font-black text-white print:text-black tracking-tighter">Rs. {completedOrder.total.toLocaleString()}</span>
@@ -328,36 +414,31 @@ export default function CheckoutPage() {
                     <input type="radio" name="payment" value="cod" className="hidden" checked={paymentMethod === 'cod'} onChange={() => setPaymentMethod('cod')} />
                   </label>
 
-                 <label className="block cursor-not-allowed border p-8 transition-all duration-300 rounded-none bg-transparent border-white/5 opacity-50 relative overflow-hidden">
-  {/* Diagonal "Coming Soon" Tape (Optional but looks premium) */}
-  <div className="absolute top-6 -right-10 bg-purple-600 text-white text-[8px] font-black uppercase tracking-[0.3em] py-1 px-12 rotate-45">
-    Coming Soon
-  </div>
-
-  <div className="flex items-center gap-8">
-    <div className="w-8 h-8 rounded-full border border-zinc-700 flex items-center justify-center shrink-0">
-    </div>
-    <div className="flex-1">
-      <div className="flex justify-between items-center pr-12">
-        <h4 className="text-2xl font-bold text-white uppercase tracking-widest">Credit / Debit</h4>
-        <div className="flex gap-4">
-          <span className="text-xs font-black text-zinc-500 uppercase tracking-[0.2em]">Visa</span>
-          <span className="text-xs font-black text-zinc-500 uppercase tracking-[0.2em]">Mastercard</span>
-        </div>
-      </div>
-      <p className="text-lg text-zinc-500 font-light tracking-wide mt-2">Secure digital gateway is currently under integration with coordination of team XPAY.</p>
-    </div>
-  </div>
-  {/* Disabled input prevents them from actually selecting it */}
-  <input type="radio" name="payment" value="card" className="hidden" disabled />
-</label>
-
-<label className="block cursor-not-allowed border p-8 transition-all duration-300 rounded-none bg-transparent border-white/5 opacity-50 relative overflow-hidden mt-8">
-                    {/* Diagonal "Coming Soon" Tape */}
+                  <label className="block cursor-not-allowed border p-8 transition-all duration-300 rounded-none bg-transparent border-white/5 opacity-50 relative overflow-hidden mt-8">
                     <div className="absolute top-6 -right-10 bg-purple-600 text-white text-[8px] font-black uppercase tracking-[0.3em] py-1 px-12 rotate-45 shadow-lg">
                       Coming Soon
                     </div>
+                    <div className="flex items-center gap-8">
+                      <div className="w-8 h-8 rounded-full border border-zinc-700 flex items-center justify-center shrink-0">
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex justify-between items-center pr-12">
+                          <h4 className="text-2xl font-bold text-white uppercase tracking-widest">Credit / Debit</h4>
+                          <div className="flex gap-4">
+                            <span className="text-xs font-black text-zinc-500 uppercase tracking-[0.2em]">Visa</span>
+                            <span className="text-xs font-black text-zinc-500 uppercase tracking-[0.2em]">Mastercard</span>
+                          </div>
+                        </div>
+                        <p className="text-lg text-zinc-500 font-light tracking-wide mt-2">Secure digital gateway is currently under integration with coordination of team XPAY.</p>
+                      </div>
+                    </div>
+                    <input type="radio" name="payment" value="card" className="hidden" disabled />
+                  </label>
 
+                  <label className="block cursor-not-allowed border p-8 transition-all duration-300 rounded-none bg-transparent border-white/5 opacity-50 relative overflow-hidden mt-8">
+                    <div className="absolute top-6 -right-10 bg-purple-600 text-white text-[8px] font-black uppercase tracking-[0.3em] py-1 px-12 rotate-45 shadow-lg">
+                      Coming Soon
+                    </div>
                     <div className="flex items-center gap-8">
                       <div className="w-8 h-8 rounded-full border border-zinc-700 flex items-center justify-center shrink-0">
                       </div>
@@ -371,7 +452,6 @@ export default function CheckoutPage() {
                         <p className="text-lg text-zinc-500 font-light tracking-wide mt-2">Direct IBAN network processing is being finalized.</p>
                       </div>
                     </div>
-                    {/* Disabled input prevents selection */}
                     <input type="radio" name="payment" value="bank" className="hidden" disabled />
                   </label>
                 </div>
@@ -413,18 +493,63 @@ export default function CheckoutPage() {
                   ))}
                 </div>
 
-                <div className="space-y-6 border-t border-white/10 pt-10 mb-12">
+                {/* ✨ NEW: PROMO CODE INPUT ✨ */}
+                <div className="border-t border-white/10 pt-8 mb-8">
+                  <p className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em] mb-4">Gift Card or Discount Code</p>
+                  
+                  {!appliedPromo ? (
+                    <div className="flex gap-3">
+                      <input
+                        type="text"
+                        value={promoCodeInput}
+                        onChange={(e) => setPromoCodeInput(e.target.value.toUpperCase())}
+                        placeholder="ENTER CODE"
+                        className="flex-1 bg-black/40 border border-white/10 text-white px-5 py-4 rounded-xl outline-none focus:border-purple-500 transition-all font-mono uppercase tracking-widest text-sm"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleApplyPromo}
+                        disabled={isApplyingPromo || !promoCodeInput}
+                        className="px-8 py-4 bg-white/10 text-white hover:bg-white hover:text-black font-black uppercase tracking-widest text-xs rounded-xl transition-colors disabled:opacity-50"
+                      >
+                        {isApplyingPromo ? '...' : 'Apply'}
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between bg-purple-500/10 border border-purple-500/30 px-5 py-4 rounded-xl">
+                      <div className="flex items-center gap-3">
+                        <span className="w-2.5 h-2.5 bg-purple-500 rounded-full animate-pulse"></span>
+                        <span className="font-mono text-purple-400 font-bold tracking-widest text-sm">{appliedPromo.code} APPLIED</span>
+                      </div>
+                      <button type="button" onClick={handleRemovePromo} className="text-zinc-500 hover:text-white transition-colors" title="Remove Code">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                      </button>
+                    </div>
+                  )}
+                  {promoError && <p className="text-red-500 text-[10px] uppercase tracking-widest font-bold mt-3 ml-1">{promoError}</p>}
+                </div>
+
+                <div className="space-y-6 border-t border-white/10 pt-8 mb-12">
                   <div className="flex justify-between text-xl text-zinc-400 font-light tracking-wide">
                     <span>Subtotal</span>
                     <span className="text-white">Rs. {subtotal.toLocaleString()}</span>
                   </div>
+                  
+                  {/* ✨ SHOW APPLIED DISCOUNT ✨ */}
+                  {discountAmount > 0 && (
+                    <div className="flex justify-between text-xl text-purple-400 font-bold tracking-wide">
+                      <span>Discount ({appliedPromo?.code})</span>
+                      <span>- Rs. {discountAmount.toLocaleString()}</span>
+                    </div>
+                  )}
+
                   <div className="flex justify-between text-xl text-zinc-400 font-light tracking-wide items-center">
-                    <span>Dilivery Fee</span>
+                    <span>Delivery Fee</span>
                     <span className={shipping === 0 ? "text-purple-400 font-bold uppercase tracking-[0.2em] text-[10px]" : "text-white"}>
                       {shipping === 0 ? "Complimentary" : `Rs. ${shipping.toLocaleString()}`}
                     </span>
                   </div>
-                  <div className="flex justify-between items-end pt-8 mt-4">
+                  <div className="flex justify-between items-end pt-8 mt-4 border-t border-white/5">
                     <span className="text-sm font-black text-zinc-500 uppercase tracking-[0.3em]">Total Bill</span>
                     <span className="text-5xl font-black text-white tracking-tighter">Rs. {total.toLocaleString()}</span>
                   </div>
@@ -433,7 +558,7 @@ export default function CheckoutPage() {
                 <button 
                   type="submit"
                   disabled={isProcessing}
-                  className={`w-full py-8 font-black text-sm md:text-base uppercase tracking-[0.3em] transition-all flex items-center justify-center gap-6 group rounded-none ${isProcessing ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed' : 'bg-white text-black hover:bg-purple-600 hover:text-white'}`}
+                  className={`w-full py-8 font-black text-sm md:text-base uppercase tracking-[0.3em] transition-all flex items-center justify-center gap-6 group rounded-none ${isProcessing ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed' : 'bg-white text-black hover:bg-purple-600 hover:text-white shadow-2xl'}`}
                 >
                   {isProcessing ? (
                     <>

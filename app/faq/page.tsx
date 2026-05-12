@@ -8,7 +8,7 @@ const faqs = [
     category: "Orders & Shipping",
     questions: [
       { q: "How long does delivery take?", a: "Standard delivery across Pakistan takes 7 business days." },
-      { q: "Is there a Delivery Fee ?", a: "YES- (TCS) charges Rupees 300 for a single delivery...But the delivery charges are complementary, 'If the order amount is above Rupees 3000'" },
+      { q: "Is there a Delivery Fee ?", a: "YES- (TCS) charges Rupees 300 for a single delivery...But the delivery charges are complementary, 'If the order amount is above Rupees 3500'" },
       { q: "Do you offer Cash on Delivery (COD)?", a: "Yes, we offer Cash on Delivery nationwide for all orders under Rs. 10,000 to ensure maximum trust and convenience." },
       { q: "Can I change my shipping address?", a: "You can update your shipping address within 12 hours of placing the order by contacting our Support Desk via WhatsApp (Preferred) or EMAIL." }
     ]

@@ -9,6 +9,7 @@ import OrdersModule from '../../components/admin/OrdersModule';
 import InventoryModule from '../../components/admin/InventoryModule';
 import ReviewsModule from '../../components/admin/ReviewsModule';
 import MarketingModule from '../../components/admin/MarketingModule';
+import DiscountsModule from '../../components/admin/DiscountsModule';
 
 export default function AdminDashboard() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -16,8 +17,8 @@ export default function AdminDashboard() {
   const [password, setPassword] = useState('');
   const [authError, setAuthError] = useState('');
   
-  // ✨ ADDED 'Marketing' TO THE ACTIVE MODULE STATE ✨
-  const [activeModule, setActiveModule] = useState<'Orders' | 'Inventory' | 'Reviews' | 'Marketing'>('Orders');
+  // ✨ ADDED 'Marketing' and Discounts TO THE ACTIVE MODULE STATE ✨
+ const [activeModule, setActiveModule] = useState<'Orders' | 'Inventory' | 'Marketing' | 'Reviews' | 'Discounts'>('Orders');
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -79,7 +80,9 @@ export default function AdminDashboard() {
             
             {/* ✨ NEW MARKETING BUTTON ✨ */}
             <button onClick={() => setActiveModule('Marketing')} className={`w-full text-left px-6 py-5 rounded-2xl font-bold text-sm uppercase tracking-widest transition-all ${activeModule === 'Marketing' ? 'bg-purple-600/10 border border-purple-500/30 text-purple-400' : 'text-zinc-500 hover:text-white border border-transparent'}`}>Marketing</button>
-            
+              {/* ✨ NEW Discounts BUTTON ✨ */}
+            <button onClick={() => setActiveModule('Discounts')} className={`w-full text-left px-6 py-5 rounded-2xl font-bold text-sm uppercase tracking-widest transition-all ${activeModule === 'Discounts' ? 'bg-purple-600/10 border border-purple-500/30 text-purple-400' : 'text-zinc-500 hover:text-white border border-transparent'}`}>Discounts</button>
+
             <button onClick={() => setActiveModule('Reviews')} className={`w-full text-left px-6 py-5 rounded-2xl font-bold text-sm uppercase tracking-widest transition-all ${activeModule === 'Reviews' ? 'bg-purple-600/10 border border-purple-500/30 text-purple-400' : 'text-zinc-500 hover:text-white border border-transparent'}`}>Reviews</button>
             <Link href="/admin/chat" className="block w-full px-6 py-5 text-zinc-500 hover:text-white font-bold text-sm uppercase tracking-widest transition-all">Customer Chat</Link>
           </div>
@@ -95,6 +98,7 @@ export default function AdminDashboard() {
           {activeModule === 'Inventory' && <InventoryModule />}
           {activeModule === 'Marketing' && <MarketingModule />}
           {activeModule === 'Reviews' && <ReviewsModule />}
+          {activeModule === 'Discounts' && <DiscountsModule />}
         </div>
 
       </div>

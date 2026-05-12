@@ -3,7 +3,7 @@ import nodemailer from 'nodemailer';
 
 export async function POST(request: Request) {
   try {
-    const { email, name, orderId, status } = await request.json();
+    const { email, name, orderId, status, trackingNumber } = await request.json();
 
     const transporter = nodemailer.createTransport({
       service: 'gmail',
@@ -23,7 +23,19 @@ export async function POST(request: Request) {
         statusMessage = `Your order is currently being prepared and verified by our logistics team. We will notify you the moment it dispatches.`;
         break;
       case 'Dispatched':
-        statusMessage = `Great news! Your assets have been successfully dispatched and handed over to our courier partners. It is currently en route to your location.`;
+        statusMessage = `Great news! Your assets have been successfully dispatched and handed over to <strong>M&P Courier</strong>.`;
+        // ✨ NEW: INJECT M&P TRACKING DATA IF AVAILABLE ✨
+        if (trackingNumber) {
+          statusMessage += `
+            <br/><br/>
+            <span style="font-size: 11px; color: #71717a; text-transform: uppercase; letter-spacing: 2px;">M&P Tracking Number</span><br/>
+            <span style="font-family: monospace; font-size: 18px; font-weight: bold; color: #fff; display: inline-block; margin-top: 4px;">${trackingNumber}</span>
+            <br/><br/>
+            <a href="https://mulphilog.com/tracking/" target="_blank" style="display: inline-block; background-color: #F4AA41; color: #000; padding: 12px 24px; font-size: 11px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; text-decoration: none; border-radius: 4px; margin-top: 10px;">
+              Track on M&P Website &rarr;
+            </a>
+          `;
+        }
         statusColor = "#3b82f6"; // Blue
         subjectLine = `Order Dispatched! 📦 ${orderId} - CARTIO`;
         break;
@@ -51,9 +63,9 @@ export async function POST(request: Request) {
           <div style="height: 1px; background-color: #27272a; margin: 40px 0;"></div>
 
           <p style="font-size: 16px; font-weight: 300; text-align: left; color: #e4e4e7;">Dear ${name},</p>
-          <p style="font-size: 14px; font-weight: 300; text-align: left; line-height: 1.6; color: #a1a1aa;">
+          <div style="font-size: 14px; font-weight: 300; text-align: left; line-height: 1.6; color: #a1a1aa;">
             ${statusMessage}
-          </p>
+          </div>
 
           <div style="background-color: #18181b; border: 1px solid #27272a; border-radius: 16px; padding: 30px; margin: 40px 0; text-align: center;">
             <p style="font-size: 10px; font-weight: bold; letter-spacing: 2px; color: #a1a1aa; text-transform: uppercase; margin: 0 0 10px 0;">Order Reference</p>

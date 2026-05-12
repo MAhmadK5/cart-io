@@ -10,7 +10,7 @@ type Product = {
   id: number;
   name: string;
   price: number;
-  original_price: number | null; // ✨ ADDED ORIGINAL PRICE ✨
+  original_price: number | null;
   category: string;
   tag: string | null;
   rating: number;
@@ -32,12 +32,13 @@ function MarketContent() {
   
   const [activeCategory, setActiveCategory] = useState(urlCategory || "All");
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortBy, setSortBy] = useState("featured");
+  
+  // ✨ UPDATED: Default sort is now "new" instead of "featured" ✨
+  const [sortBy, setSortBy] = useState("new"); 
+  
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
   const [inStockOnly, setInStockOnly] = useState(false);
-  
-  // ✨ NEW: SALE FILTER ✨
   const [saleOnly, setSaleOnly] = useState(false);
   
   const [gridLayout, setGridLayout] = useState<1 | 2 | 3 | 4>(3); 
@@ -79,7 +80,6 @@ function MarketContent() {
     const matchesMin = minPrice === "" || product.price >= Number(minPrice);
     const matchesMax = maxPrice === "" || product.price <= Number(maxPrice);
     const matchesStock = !inStockOnly || product.stock > 0;
-    // ✨ SALE LOGIC ✨
     const matchesSale = !saleOnly || (product.original_price && product.original_price > product.price);
     
     return matchesCategory && matchesSearch && matchesMin && matchesMax && matchesStock && matchesSale;
@@ -113,7 +113,6 @@ function MarketContent() {
   const renderFilters = () => (
     <div className="space-y-10">
       
-      {/* ✨ NEW: DEDICATED PROMOTIONS TOGGLE ✨ */}
       <div className="p-5 bg-gradient-to-br from-red-500/10 to-orange-500/10 border border-red-500/20 rounded-2xl">
         <label className="flex items-center justify-between cursor-pointer group">
           <div className="flex flex-col">
@@ -136,7 +135,7 @@ function MarketContent() {
         <div className="flex flex-col gap-2">
           {categories.map((category) => {
             const count = getCategoryCount(category);
-            const isActive = activeCategory === category && !saleOnly; // Deselect if sale is active
+            const isActive = activeCategory === category && !saleOnly; 
             return (
               <button
                 key={category}
@@ -170,7 +169,7 @@ function MarketContent() {
           </div>
         </label>
       </div>
-      <button onClick={() => { setMinPrice(""); setMaxPrice(""); setInStockOnly(false); setSaleOnly(false); setActiveCategory("All"); setShowMobileFilters(false); }} className="w-full py-4 bg-transparent border border-zinc-800 text-zinc-400 text-[10px] md:text-xs font-black uppercase tracking-[0.3em] rounded-xl hover:bg-white hover:text-black transition-all duration-300">
+      <button onClick={() => { setSearchQuery(""); setActiveCategory("All"); setSortBy("new"); setMinPrice(""); setMaxPrice(""); setInStockOnly(false); setSaleOnly(false); setShowMobileFilters(false); }} className="w-full py-4 bg-transparent border border-zinc-800 text-zinc-400 text-[10px] md:text-xs font-black uppercase tracking-[0.3em] rounded-xl hover:bg-white hover:text-black transition-all duration-300">
         Reset Filters
       </button>
     </div>
@@ -190,7 +189,7 @@ function MarketContent() {
             </h1>
           </div>
           <p className="text-zinc-400 text-sm md:text-base font-light tracking-widest uppercase">
-            Curating {displayedProducts.length} Premium Assets
+            Curating {displayedProducts.length} Premium Items
           </p>
         </div>
 
@@ -204,8 +203,8 @@ function MarketContent() {
           </button>
           <div className="flex items-center gap-2 order-3 bg-black/50 border border-white/5 rounded-xl md:rounded-2xl px-4 shrink-0">
             <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="bg-transparent text-white text-[10px] md:text-xs font-black uppercase tracking-[0.2em] py-3 md:py-4 focus:outline-none cursor-pointer appearance-none">
-              <option value="featured" className="bg-zinc-900">Recommended</option>
               <option value="new" className="bg-zinc-900">New Arrivals</option>
+              <option value="featured" className="bg-zinc-900">Recommended</option>
               <option value="low" className="bg-zinc-900">Price: Ascending</option>
               <option value="high" className="bg-zinc-900">Price: Descending</option>
             </select>
@@ -251,7 +250,7 @@ function MarketContent() {
                 <div className="w-20 h-20 mx-auto mb-6 bg-white/5 rounded-full flex items-center justify-center text-zinc-500"><svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
                 <h3 className="text-3xl font-black text-white mb-4 tracking-tighter uppercase">Asset Not Found</h3>
                 <p className="text-zinc-400 text-lg mb-10 font-light">No items match your current refined criteria.</p>
-                <button onClick={() => {setSearchQuery(""); setActiveCategory("All"); setSortBy("featured"); setMinPrice(""); setMaxPrice(""); setInStockOnly(false); setSaleOnly(false);}} className="px-10 py-5 bg-white text-black hover:bg-purple-600 hover:text-white font-black text-xs md:text-sm uppercase tracking-[0.3em] rounded-none transition-all duration-300">Reset Catalog</button>
+                <button onClick={() => {setSearchQuery(""); setActiveCategory("All"); setSortBy("new"); setMinPrice(""); setMaxPrice(""); setInStockOnly(false); setSaleOnly(false);}} className="px-10 py-5 bg-white text-black hover:bg-purple-600 hover:text-white font-black text-xs md:text-sm uppercase tracking-[0.3em] rounded-none transition-all duration-300">Reset Catalog</button>
               </div>
             ) : (
               <div className={`grid gap-4 md:gap-6 ${getGridClass()}`}>
@@ -265,9 +264,7 @@ function MarketContent() {
                         <div className="absolute inset-0 bg-gradient-to-tr from-purple-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
 
                         <div className="absolute top-4 left-4 md:top-6 md:left-6 z-10 flex flex-col gap-2">
-                          {/* ✨ RED SALE BADGE ✨ */}
                           {isOnSale && <span className="px-3 md:px-4 py-1.5 bg-red-500 text-white text-[8px] md:text-[10px] font-black uppercase tracking-[0.3em] rounded-full shadow-2xl animate-pulse">Sale</span>}
-                          
                           {product.tag && !isOnSale && <span className="px-3 md:px-4 py-1.5 bg-white text-black text-[8px] md:text-[10px] font-black uppercase tracking-[0.3em] rounded-full shadow-2xl">{product.tag}</span>}
                           {product.stock <= 5 && product.stock > 0 && <span className="px-3 md:px-4 py-1.5 bg-orange-500 text-white text-[8px] md:text-[10px] font-black uppercase tracking-[0.3em] rounded-full shadow-2xl">Rare Asset</span>}
                           {product.stock === 0 && <span className="px-3 md:px-4 py-1.5 bg-zinc-800 text-zinc-400 text-[8px] md:text-[10px] font-black uppercase tracking-[0.3em] rounded-full shadow-2xl">Vaulted</span>}
@@ -297,7 +294,6 @@ function MarketContent() {
                           <div className="flex items-center gap-3">
                             <p className={`font-light ${isOnSale ? 'text-red-400 font-bold' : 'text-zinc-300'} tracking-wider ${gridLayout === 2 ? 'text-xl md:text-2xl' : 'text-2xl md:text-3xl'}`}>Rs. {product.price.toLocaleString()}</p>
                             
-                            {/* ✨ CROSSED OUT ORIGINAL PRICE ✨ */}
                             {isOnSale && (
                               <p className="text-sm md:text-base text-zinc-500 line-through tracking-wider">
                                 Rs. {product.original_price?.toLocaleString()}
