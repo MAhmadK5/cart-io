@@ -10,6 +10,7 @@ import InventoryModule from '../../components/admin/InventoryModule';
 import ReviewsModule from '../../components/admin/ReviewsModule';
 import MarketingModule from '../../components/admin/MarketingModule';
 import DiscountsModule from '../../components/admin/DiscountsModule';
+import AnalyticsModule from '../../components/admin/AnalyticsModule';
 
 export default function AdminDashboard() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -17,8 +18,8 @@ export default function AdminDashboard() {
   const [password, setPassword] = useState('');
   const [authError, setAuthError] = useState('');
   
-  // ✨ ADDED 'Marketing' and Discounts TO THE ACTIVE MODULE STATE ✨
- const [activeModule, setActiveModule] = useState<'Orders' | 'Inventory' | 'Marketing' | 'Reviews' | 'Discounts'>('Orders');
+  // ✨ ADDED ALL MODULES TO THE ACTIVE STATE ✨
+  const [activeModule, setActiveModule] = useState<'Orders' | 'Inventory' | 'Marketing' | 'Reviews' | 'Discounts' | 'Analytics'>('Analytics'); // Set Analytics as default to test it
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -75,15 +76,15 @@ export default function AdminDashboard() {
           </div>
           
           <div className="flex-1 overflow-y-auto p-8 space-y-4">
+            {/* ✨ FIXED: Added Analytics Button ✨ */}
+            <button onClick={() => setActiveModule('Analytics')} className={`w-full text-left px-6 py-5 rounded-2xl font-bold text-sm uppercase tracking-widest transition-all ${activeModule === 'Analytics' ? 'bg-purple-600/10 border border-purple-500/30 text-purple-400' : 'text-zinc-500 hover:text-white border border-transparent'}`}>Data Intel</button>
+            
             <button onClick={() => setActiveModule('Orders')} className={`w-full text-left px-6 py-5 rounded-2xl font-bold text-sm uppercase tracking-widest transition-all ${activeModule === 'Orders' ? 'bg-purple-600/10 border border-purple-500/30 text-purple-400' : 'text-zinc-500 hover:text-white border border-transparent'}`}>Orders</button>
             <button onClick={() => setActiveModule('Inventory')} className={`w-full text-left px-6 py-5 rounded-2xl font-bold text-sm uppercase tracking-widest transition-all ${activeModule === 'Inventory' ? 'bg-purple-600/10 border border-purple-500/30 text-purple-400' : 'text-zinc-500 hover:text-white border border-transparent'}`}>Inventory</button>
-            
-            {/* ✨ NEW MARKETING BUTTON ✨ */}
             <button onClick={() => setActiveModule('Marketing')} className={`w-full text-left px-6 py-5 rounded-2xl font-bold text-sm uppercase tracking-widest transition-all ${activeModule === 'Marketing' ? 'bg-purple-600/10 border border-purple-500/30 text-purple-400' : 'text-zinc-500 hover:text-white border border-transparent'}`}>Marketing</button>
-              {/* ✨ NEW Discounts BUTTON ✨ */}
             <button onClick={() => setActiveModule('Discounts')} className={`w-full text-left px-6 py-5 rounded-2xl font-bold text-sm uppercase tracking-widest transition-all ${activeModule === 'Discounts' ? 'bg-purple-600/10 border border-purple-500/30 text-purple-400' : 'text-zinc-500 hover:text-white border border-transparent'}`}>Discounts</button>
-
             <button onClick={() => setActiveModule('Reviews')} className={`w-full text-left px-6 py-5 rounded-2xl font-bold text-sm uppercase tracking-widest transition-all ${activeModule === 'Reviews' ? 'bg-purple-600/10 border border-purple-500/30 text-purple-400' : 'text-zinc-500 hover:text-white border border-transparent'}`}>Reviews</button>
+            
             <Link href="/admin/chat" className="block w-full px-6 py-5 text-zinc-500 hover:text-white font-bold text-sm uppercase tracking-widest transition-all">Customer Chat</Link>
           </div>
 
@@ -94,6 +95,7 @@ export default function AdminDashboard() {
 
         {/* ✨ DYNAMIC MODULE LOADER ✨ */}
         <div className="flex-1 p-6 md:p-8 lg:p-12">
+          {activeModule === 'Analytics' && <AnalyticsModule />}
           {activeModule === 'Orders' && <OrdersModule />}
           {activeModule === 'Inventory' && <InventoryModule />}
           {activeModule === 'Marketing' && <MarketingModule />}
