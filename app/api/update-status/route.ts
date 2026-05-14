@@ -3,7 +3,7 @@ import nodemailer from 'nodemailer';
 
 export async function POST(request: Request) {
   try {
-    const { email, name, orderId, status, trackingNumber } = await request.json();
+    const { email, name, orderId, status, trackingNumber, courierPartner } = await request.json();
 
     const transporter = nodemailer.createTransport({
       service: 'gmail',
@@ -13,9 +13,8 @@ export async function POST(request: Request) {
       },
     });
 
-    // Determine the exact message based on the status
     let statusMessage = "";
-    let statusColor = "#c084fc"; // Purple default
+    let statusColor = "#c084fc"; 
     let subjectLine = `Order Update: ${orderId} - CARTIO`;
 
     switch (status) {
@@ -23,30 +22,35 @@ export async function POST(request: Request) {
         statusMessage = `Your order is currently being prepared and verified by our logistics team. We will notify you the moment it dispatches.`;
         break;
       case 'Dispatched':
-        statusMessage = `Great news! Your assets have been successfully dispatched and handed over to <strong>M&P Courier</strong>.`;
-        // ✨ NEW: INJECT M&P TRACKING DATA IF AVAILABLE ✨
+        const partnerName = courierPartner || 'Courier';
+        const trackingLink = partnerName === 'Leopards' 
+          ? 'https://pk.leopardscourier.com/tracking' 
+          : 'https://mulphilog.com/tracking/';
+          
+        statusMessage = `Great news! Your assets have been successfully dispatched and handed over to <strong>${partnerName}</strong>.`;
+        
         if (trackingNumber) {
           statusMessage += `
             <br/><br/>
-            <span style="font-size: 11px; color: #71717a; text-transform: uppercase; letter-spacing: 2px;">M&P Tracking Number</span><br/>
+            <span style="font-size: 11px; color: #71717a; text-transform: uppercase; letter-spacing: 2px;">${partnerName} Tracking Number</span><br/>
             <span style="font-family: monospace; font-size: 18px; font-weight: bold; color: #fff; display: inline-block; margin-top: 4px;">${trackingNumber}</span>
             <br/><br/>
-            <a href="https://mulphilog.com/tracking/" target="_blank" style="display: inline-block; background-color: #F4AA41; color: #000; padding: 12px 24px; font-size: 11px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; text-decoration: none; border-radius: 4px; margin-top: 10px;">
-              Track on M&P Website &rarr;
+            <a href="${trackingLink}" target="_blank" style="display: inline-block; background-color: #F4AA41; color: #000; padding: 12px 24px; font-size: 11px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; text-decoration: none; border-radius: 4px; margin-top: 10px;">
+              Track on ${partnerName} Website &rarr;
             </a>
           `;
         }
-        statusColor = "#3b82f6"; // Blue
+        statusColor = "#3b82f6";
         subjectLine = `Order Dispatched! 📦 ${orderId} - CARTIO`;
         break;
       case 'Delivered':
         statusMessage = `Your order has been marked as delivered. We hope you love your new premium assets! We would highly appreciate it if you left a review on our platform.`;
-        statusColor = "#ffffff"; // White
+        statusColor = "#ffffff";
         subjectLine = `Order Delivered! 🎉 ${orderId} - CARTIO`;
         break;
       case 'Cancelled':
         statusMessage = `Your order has been officially cancelled. If you have any questions or would like to place a new request, our concierge desk is open 24/7.`;
-        statusColor = "#ef4444"; // Red
+        statusColor = "#ef4444";
         subjectLine = `Order Cancelled: ${orderId} - CARTIO`;
         break;
       default:

@@ -19,8 +19,9 @@ export default function OrdersModule() {
   } | null>(null);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   
-  // ✨ NEW: TRACKING INPUT STATE ✨
+  // ✨ TRACKING STATES ✨
   const [trackingInput, setTrackingInput] = useState("");
+  const [courierPartner, setCourierPartner] = useState("M&P"); // Default to M&P
 
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; orderId: number } | null>(null);
   const [deleteInput, setDeleteInput] = useState("");
@@ -50,7 +51,8 @@ export default function OrdersModule() {
 
   const handleStatusChangeRequest = (orderId: number, newStatus: string, oldStatus: string) => {
     if (newStatus === oldStatus) return;
-    setTrackingInput(""); // Reset tracking input on open
+    setTrackingInput(""); 
+    setCourierPartner("M&P"); 
     setStatusModal({ isOpen: true, orderId, newStatus, oldStatus });
   };
 
@@ -59,7 +61,7 @@ export default function OrdersModule() {
     
     // ✨ REQUIRE TRACKING IF DISPATCHED ✨
     if (statusModal.newStatus === 'Dispatched' && !trackingInput.trim()) {
-      alert("Please provide the M&P Tracking Number to dispatch this order.");
+      alert(`Please provide the ${courierPartner} Tracking Number to dispatch this order.`);
       return;
     }
 
@@ -67,15 +69,20 @@ export default function OrdersModule() {
     
     const { orderId, newStatus } = statusModal;
     const targetOrder = orders.find(o => o.id === orderId);
+    
     const trackingNo = newStatus === 'Dispatched' ? trackingInput.trim() : targetOrder.tracking_number;
+    const partner = newStatus === 'Dispatched' ? courierPartner : targetOrder.courier_partner;
 
     // 1. Update local UI state
-    setOrders(orders.map(o => o.id === orderId ? { ...o, status: newStatus, tracking_number: trackingNo } : o));
+    setOrders(orders.map(o => o.id === orderId ? { ...o, status: newStatus, tracking_number: trackingNo, courier_partner: partner } : o));
     setMetrics(prev => ({ ...prev, pending: newStatus === 'Processing' ? prev.pending + 1 : prev.pending - 1 }));
     
     // 2. Update Supabase
     const updatePayload: any = { status: newStatus };
-    if (newStatus === 'Dispatched') updatePayload.tracking_number = trackingNo;
+    if (newStatus === 'Dispatched') {
+      updatePayload.tracking_number = trackingNo;
+      updatePayload.courier_partner = partner;
+    }
     await supabase.from('orders').update(updatePayload).eq('id', orderId);
 
     // 3. Trigger Email API with Tracking Payload
@@ -89,7 +96,8 @@ export default function OrdersModule() {
             name: targetOrder.customer_name,
             orderId: targetOrder.order_id,
             status: newStatus,
-            trackingNumber: newStatus === 'Dispatched' ? trackingNo : null
+            trackingNumber: newStatus === 'Dispatched' ? trackingNo : null,
+            courierPartner: newStatus === 'Dispatched' ? partner : null // Send to email API
           })
         });
       } catch (err) {
@@ -121,15 +129,19 @@ export default function OrdersModule() {
     navigator.clipboard.writeText(text);
   };
 
-  // ✨ UPDATED WHATSAPP MESSAGE WITH TRACKING ✨
+  // ✨ UPDATED WHATSAPP MESSAGE WITH COURIER SPECIFIC LINK ✨
   const getOrderMessage = (order: any) => {
     let text = "";
+    const trackingLink = order.courier_partner === 'Leopards' 
+      ? 'https://www.leopardscourier.com/tracking' 
+      : 'https://mulphilog.com/tracking/';
+
     switch(order.status) {
       case 'Processing':
         text = `Hello ${order.customer_name}! 🚀\n\nThank you for choosing CARTIO. Your order (${order.order_id}) is currently being prepared by our team. We will notify you the moment it dispatches!`;
         break;
       case 'Dispatched':
-        text = `Hello ${order.customer_name}! 📦\n\nGreat news! Your CARTIO order (${order.order_id}) has been successfully dispatched via M&P Courier.\n\n*Tracking Number:* ${order.tracking_number || 'N/A'}\n*Track Here:* https://mulphilog.com/tracking/`;
+        text = `Hello ${order.customer_name}! 📦\n\nGreat news! Your CARTIO order (${order.order_id}) has been successfully dispatched via ${order.courier_partner || 'Courier'}.\n\n*Tracking Number:* ${order.tracking_number || 'N/A'}\n*Track Here:* ${trackingLink}`;
         break;
       case 'Delivered':
         text = `Hello ${order.customer_name}! 🎉\n\nYour CARTIO order (${order.order_id}) has been marked as delivered. We hope you love your new assets! We would love to hear your feedback on our website.`;
@@ -200,7 +212,7 @@ export default function OrdersModule() {
               <p>${new Date(order.created_at).toLocaleString()}</p>
               <strong>Payment Protocol</strong>
               <p>${order.payment_method === 'cod' ? 'Cash on Delivery' : 'Credit/Debit'}</p>
-              ${order.tracking_number ? `<strong>M&P Tracking</strong><p>${order.tracking_number}</p>` : ''}
+              ${order.tracking_number ? `<strong>${order.courier_partner || 'Courier'} Tracking</strong><p>${order.tracking_number}</p>` : ''}
             </div>
           </div>
           <div class="items">
@@ -296,11 +308,11 @@ export default function OrdersModule() {
               <div className="flex flex-wrap items-center gap-3 sm:gap-4">
                 <span className="text-[10px] sm:text-xs font-black text-black bg-white px-3 sm:px-4 py-1.5 rounded-lg tracking-widest uppercase">ID: {order.order_id}</span>
                 <span className="text-[10px] sm:text-xs text-zinc-400 font-medium tracking-wide">{new Date(order.created_at).toLocaleString()}</span>
-                {/* ✨ SHOW TRACKING NUMBER ON CARD ✨ */}
+                {/* ✨ SHOW TRACKING NUMBER & PARTNER ON CARD ✨ */}
                 {order.tracking_number && (
                   <span className="text-[10px] sm:text-xs font-black text-[#F4AA41] bg-[#F4AA41]/10 border border-[#F4AA41]/20 px-3 sm:px-4 py-1.5 rounded-lg tracking-widest uppercase flex items-center gap-1.5">
                     <svg viewBox="0 0 72 72" className="w-4 h-4"><path fill="currentColor" stroke="none" d="M10.921,22.5547l-4.0185,2.0136l-2.5423,1.7802l-0.8686,2.7256l-1.4696,4.1912l1.8157,2.3282l5.8333-1.5797 l1.6224,1.5797l3.6707,1.9249l1.2487,4.3261l-4.0418,3.9438l-1.4167,4.3797l0.539,2.6654l2.8043,2.3565l3.0014-2.8463 c0,0-0.5245-3.0007,0.9404-4.3388c1.4649-1.3381,3.3757-3.7385,3.3757-3.7385v8.4005l0.6012,2.5443l2.2353,0.4577l1.3519-1.8344 l1.4614-12.9224l2.2658,0.2907l5.9944,0.5474l4.2084-2.0965l1.1374,4.6127l3.6984,3.7385l-0.79,4.7548l1.175,2.2688l2.5399-1.4963 l2.3975-4.1153v-3.6284l-4.1458-4.0474l7.6544,5.3456l2.7721,1.7794l0.7162,5.8899l1.9164,0.9706l1.8163-1.4347l-0.7805-9.0342 L57.9183,43.88l-3.4836-5.7002l0.2779-4.3048l-0.5946-5.3399c-3.7098-1.924-7.58-2.9066-11.6334-2.8146l-8.4753-0.0539 l-7.4206,0.5278l-4.8427-1.3913l-6.8252-0.2347l-1.6817-1.3828L10.921,22.5547z"/></svg>
-                    M&P: {order.tracking_number}
+                    {order.courier_partner || 'Courier'}: {order.tracking_number}
                   </span>
                 )}
               </div>
@@ -316,7 +328,6 @@ export default function OrdersModule() {
             <div className="w-full">
               <div className="flex items-start sm:items-center gap-3 sm:gap-4 mb-2 w-full">
                 <h3 className={`text-2xl sm:text-3xl md:text-4xl font-black tracking-tighter uppercase break-words overflow-hidden ${order.status === 'Cancelled' ? 'text-zinc-600 line-through' : 'text-white'}`}>{order.customer_name}</h3>
-                {/* ✨ "i" INFO BUTTON ✨ */}
                 <button 
                   onClick={() => setInfoModalOrder(order)} 
                   className="w-7 h-7 sm:w-8 sm:h-8 shrink-0 rounded-full border border-white/20 text-zinc-400 hover:text-white hover:border-white hover:bg-white/10 flex items-center justify-center transition-all mt-1 sm:mt-0"
@@ -328,7 +339,6 @@ export default function OrdersModule() {
               <p className="text-sm sm:text-base md:text-lg text-zinc-400 font-light break-words">{order.shipping_address}, {order.city} {order.postal_code}</p>
             </div>
             
-            {/* ✨ RESPONSIVE ACTION BUTTONS ✨ */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 sm:pt-4 w-full">
               <button onClick={() => printReceipt(order)} className="w-full px-4 sm:px-6 py-3 sm:py-4 bg-white hover:bg-zinc-300 text-black rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-3">
                 <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
@@ -460,17 +470,34 @@ export default function OrdersModule() {
               You are moving this order from <span className="font-bold text-white">{statusModal.oldStatus}</span> to <span className="font-bold text-purple-400">{statusModal.newStatus}</span>. 
             </p>
 
-            {/* ✨ NEW: M&P TRACKING INPUT REQUIRED FOR DISPATCH ✨ */}
+            {/* ✨ COURIER SELECTION AND TRACKING INPUT ✨ */}
             {statusModal.newStatus === 'Dispatched' && (
-              <div className="mb-6 text-left">
-                <label className="text-[10px] font-black text-purple-400 uppercase tracking-[0.2em] mb-2 block">M&P Tracking Number <span className="text-red-500">*</span></label>
-                <input 
-                  type="text" 
-                  placeholder="e.g. 1234567890" 
-                  value={trackingInput}
-                  onChange={(e) => setTrackingInput(e.target.value)}
-                  className="w-full bg-black/50 border border-white/10 text-white px-4 py-3 rounded-xl outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all font-mono tracking-widest text-sm"
-                />
+              <div className="mb-6 space-y-4 text-left">
+                
+                {/* Select Courier Partner */}
+                <div>
+                  <label className="text-[10px] font-black text-purple-400 uppercase tracking-[0.2em] mb-2 block">Courier Partner</label>
+                  <select 
+                    value={courierPartner}
+                    onChange={(e) => setCourierPartner(e.target.value)}
+                    className="w-full bg-black/50 border border-white/10 text-white px-4 py-3 rounded-xl outline-none focus:border-purple-500 transition-all text-sm cursor-pointer appearance-none"
+                  >
+                    <option value="M&P">M&P Courier</option>
+                    <option value="Leopards">Leopards Courier</option>
+                  </select>
+                </div>
+
+                {/* Input Tracking Number */}
+                <div>
+                  <label className="text-[10px] font-black text-purple-400 uppercase tracking-[0.2em] mb-2 block">Tracking Number <span className="text-red-500">*</span></label>
+                  <input 
+                    type="text" 
+                    placeholder="e.g. 1234567890" 
+                    value={trackingInput}
+                    onChange={(e) => setTrackingInput(e.target.value)}
+                    className="w-full bg-black/50 border border-white/10 text-white px-4 py-3 rounded-xl outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all font-mono tracking-widest text-sm"
+                  />
+                </div>
               </div>
             )}
 

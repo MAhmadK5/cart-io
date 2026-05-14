@@ -8,7 +8,7 @@ export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [contactMenuOpen, setContactMenuOpen] = useState(false);
-  const [shopMenuOpen, setShopMenuOpen] = useState(false); // ✨ NEW STATE FOR SHOP MENU ✨
+  const [shopMenuOpen, setShopMenuOpen] = useState(false); // ✨ STATE FOR SHOP MENU ✨
   
   const router = useRouter();
   const pathname = usePathname();
@@ -37,7 +37,7 @@ export default function Header() {
       <div className="w-full bg-[#050505] border-b border-white/5 py-2.5 flex items-center justify-center gap-3 relative z-[101]">
         <span className="w-1.5 h-1.5 bg-purple-500 rounded-full animate-pulse"></span>
         <span className="text-xs md:text-sm font-bold uppercase tracking-[0.2em] text-zinc-400">
-          Free Nationwide Delivery on Orders Over <span className="text-white font-black">Rs. 3000</span>
+          Free Nationwide Delivery on Orders Over <span className="text-white font-black">Rs. 3500</span>
         </span>
       </div>
 
@@ -77,7 +77,7 @@ export default function Header() {
               <span className="absolute -bottom-2 left-0 w-0 h-0.5 bg-purple-500 transition-all duration-300 group-hover:w-full"></span>
             </Link>
             
-            {/* ✨ NEW SHOP DROPDOWN ✨ */}
+            {/* SHOP DROPDOWN */}
             <div className="relative group py-2">
               <Link href="/market" className="relative text-base xl:text-lg font-bold uppercase tracking-widest text-zinc-300 hover:text-white transition-colors flex items-center gap-1.5 group-hover:text-white">
                 Shop
@@ -98,6 +98,12 @@ export default function Header() {
                 ))}
               </div>
             </div>
+
+            {/* ✨ DESKTOP BLOG LINK WITH BLUE ACCENT ✨ */}
+            <Link href="/blog" className="relative text-base xl:text-lg font-bold uppercase tracking-widest text-zinc-300 hover:text-white transition-colors group">
+              Blog
+              <span className="absolute -bottom-2 left-0 w-0 h-0.5 bg-blue-500 transition-all duration-300 group-hover:w-full"></span>
+            </Link>
 
             <Link href="/reviews" className="relative text-base xl:text-lg font-bold uppercase tracking-widest text-zinc-300 hover:text-white transition-colors group">
               Feedback
@@ -120,7 +126,7 @@ export default function Header() {
                   WhatsApp
                 </a>
                 <a href="mailto:pkcartio@gmail.com" className="px-5 py-4 text-base font-black uppercase tracking-widest text-zinc-300 hover:bg-purple-500/10 hover:text-purple-400 transition-colors flex items-center gap-3 border-t border-white/5">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v10a2 2 0 002 2z"></path></svg>
                   Email Us
                 </a>
               </div>
@@ -173,7 +179,7 @@ export default function Header() {
             </Link>
             <div className="w-full h-px bg-white/5"></div>
             
-            {/* ✨ MOBILE SHOP ACCORDION ✨ */}
+            {/* MOBILE SHOP ACCORDION */}
             <div>
               <button 
                 onClick={() => setShopMenuOpen(!shopMenuOpen)}
@@ -196,6 +202,12 @@ export default function Header() {
             </div>
             <div className="w-full h-px bg-white/5"></div>
 
+            {/* ✨ MOBILE BLOG LINK ✨ */}
+            <Link href="/blog" onClick={() => setMobileMenuOpen(false)} className="text-2xl font-bold uppercase tracking-widest text-zinc-300 hover:text-white transition-colors flex items-center justify-between">
+              <span>Blog</span><span className="text-blue-500">→</span>
+            </Link>
+            <div className="w-full h-px bg-white/5"></div>
+
             <Link href="/reviews" onClick={() => setMobileMenuOpen(false)} className="text-2xl font-bold uppercase tracking-widest text-zinc-300 hover:text-white transition-colors flex items-center justify-between">
               <span>Feedback</span><span className="text-purple-500">→</span>
             </Link>
@@ -212,11 +224,11 @@ export default function Header() {
               </button>
               
               <div className={`flex flex-col gap-3 overflow-hidden transition-all duration-300 border-l border-white/10 ml-3 ${contactMenuOpen ? 'max-h-48 mt-4' : 'max-h-0'}`}>
-                <a href="https://wa.me/923015906959" target="_blank" rel="noopener noreferrer" className="px-4 py-2 text-lg font-black uppercase tracking-widest text-zinc-400 hover:text-[#25D366] transition-colors flex items-center gap-3">
+                <a href="https://wa.me/923196514249" target="_blank" rel="noopener noreferrer" className="px-4 py-2 text-lg font-black uppercase tracking-widest text-zinc-400 hover:text-[#25D366] transition-colors flex items-center gap-3">
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 00-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347M12 0C5.373 0 0 5.373 0 12c0 2.123.553 4.195 1.585 6.014L.16 23.84l5.973-1.566C7.945 23.321 9.943 24 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0z"/></svg>
                   WhatsApp
                 </a>
-                <a href="mailto:connectahmadkhalid@gmail.com" className="px-4 py-2 text-lg font-black uppercase tracking-widest text-zinc-400 hover:text-purple-400 transition-colors flex items-center gap-3">
+                <a href="mailto:pkcartio@gmail.com" className="px-4 py-2 text-lg font-black uppercase tracking-widest text-zinc-400 hover:text-purple-400 transition-colors flex items-center gap-3">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
                   Email Us
                 </a>

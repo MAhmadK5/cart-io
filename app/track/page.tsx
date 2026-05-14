@@ -204,24 +204,46 @@ export default function TrackPage() {
 
                 </div>
 
-                {/* ✨ SEXY M&P COURIER TRACKING LINK ✨ */}
+                {/* ✨ DYNAMIC COURIER TRACKING LINK ✨ */}
                 {(orderData.status === 'Dispatched' || orderData.status === 'Delivered') && (
                   <div className="mt-14 flex justify-center animate-fade-in relative z-10">
-                    <a 
-                      href="https://mulphilog.com/tracking/" 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
-                      className="flex items-center gap-4 px-8 py-5 bg-[#F4AA41]/10 border border-[#F4AA41]/30 hover:bg-[#F4AA41] hover:text-black text-[#F4AA41] rounded-2xl transition-all duration-300 group shadow-[0_0_30px_rgba(244,170,65,0.15)] hover:shadow-[0_0_40px_rgba(244,170,65,0.4)]"
-                    >
-                      <svg viewBox="0 0 72 72" className="w-8 h-8 grayscale opacity-80 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-300">
-                        <path fill="currentColor" stroke="none" d="M10.921,22.5547l-4.0185,2.0136l-2.5423,1.7802l-0.8686,2.7256l-1.4696,4.1912l1.8157,2.3282l5.8333-1.5797 l1.6224,1.5797l3.6707,1.9249l1.2487,4.3261l-4.0418,3.9438l-1.4167,4.3797l0.539,2.6654l2.8043,2.3565l3.0014-2.8463 c0,0-0.5245-3.0007,0.9404-4.3388c1.4649-1.3381,3.3757-3.7385,3.3757-3.7385v8.4005l0.6012,2.5443l2.2353,0.4577l1.3519-1.8344 l1.4614-12.9224l2.2658,0.2907l5.9944,0.5474l4.2084-2.0965l1.1374,4.6127l3.6984,3.7385l-0.79,4.7548l1.175,2.2688l2.5399-1.4963 l2.3975-4.1153v-3.6284l-4.1458-4.0474l7.6544,5.3456l2.7721,1.7794l0.7162,5.8899l1.9164,0.9706l1.8163-1.4347l-0.7805-9.0342 L57.9183,43.88l-3.4836-5.7002l0.2779-4.3048l-0.5946-5.3399c-3.7098-1.924-7.58-2.9066-11.6334-2.8146l-8.4753-0.0539 l-7.4206,0.5278l-4.8427-1.3913l-6.8252-0.2347l-1.6817-1.3828L10.921,22.5547z"/>
-                      </svg>
-                      <div className="flex flex-col text-left border-l border-current/20 pl-4">
-                        <span className="text-[10px] font-black uppercase tracking-widest leading-none">Track Direct via</span>
-                        <span className="text-base font-bold uppercase tracking-widest leading-none mt-1.5">M&P Courier</span>
-                      </div>
-                      <svg className="w-6 h-6 ml-2 group-hover:translate-x-2 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
-                    </a>
+                    
+                    {orderData.courier_partner === 'Leopards' ? (
+                      /* LEOPARDS BUTTON */
+                      <a 
+                        href="https://pk.leopardscourier.com/tracking" 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="flex items-center gap-4 px-8 py-5 bg-[#F4AA41]/10 border border-[#F4AA41]/30 hover:bg-[#F4AA41] hover:text-black text-[#F4AA41] rounded-2xl transition-all duration-300 group shadow-[0_0_30px_rgba(244,170,65,0.15)] hover:shadow-[0_0_40px_rgba(244,170,65,0.4)]"
+                      >
+                        <svg viewBox="0 0 72 72" className="w-8 h-8 grayscale opacity-80 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-300">
+                          <path fill="currentColor" stroke="none" d="M10.921,22.5547l-4.0185,2.0136l-2.5423,1.7802l-0.8686,2.7256l-1.4696,4.1912l1.8157,2.3282l5.8333-1.5797 l1.6224,1.5797l3.6707,1.9249l1.2487,4.3261l-4.0418,3.9438l-1.4167,4.3797l0.539,2.6654l2.8043,2.3565l3.0014-2.8463 c0,0-0.5245-3.0007,0.9404-4.3388c1.4649-1.3381,3.3757-3.7385,3.3757-3.7385v8.4005l0.6012,2.5443l2.2353,0.4577l1.3519-1.8344 l1.4614-12.9224l2.2658,0.2907l5.9944,0.5474l4.2084-2.0965l1.1374,4.6127l3.6984,3.7385l-0.79,4.7548l1.175,2.2688l2.5399-1.4963 l2.3975-4.1153v-3.6284l-4.1458-4.0474l7.6544,5.3456l2.7721,1.7794l0.7162,5.8899l1.9164,0.9706l1.8163-1.4347l-0.7805-9.0342 L57.9183,43.88l-3.4836-5.7002l0.2779-4.3048l-0.5946-5.3399c-3.7098-1.924-7.58-2.9066-11.6334-2.8146l-8.4753-0.0539 l-7.4206,0.5278l-4.8427-1.3913l-6.8252-0.2347l-1.6817-1.3828L10.921,22.5547z"/>
+                        </svg>
+                        <div className="flex flex-col text-left border-l border-current/20 pl-4">
+                          <span className="text-[10px] font-black uppercase tracking-widest leading-none">Track Direct via</span>
+                          <span className="text-base font-bold uppercase tracking-widest leading-none mt-1.5">Leopards</span>
+                        </div>
+                        <svg className="w-6 h-6 ml-2 group-hover:translate-x-2 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                      </a>
+                    ) : (
+                      /* M&P BUTTON (DEFAULT) */
+                      <a 
+                        href="https://mulphilog.com/tracking/" 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="flex items-center gap-4 px-8 py-5 bg-[#0ea5e9]/10 border border-[#0ea5e9]/30 hover:bg-[#0ea5e9] hover:text-black text-[#0ea5e9] rounded-2xl transition-all duration-300 group shadow-[0_0_30px_rgba(14,165,233,0.15)] hover:shadow-[0_0_40px_rgba(14,165,233,0.4)]"
+                      >
+                        <svg className="w-8 h-8 grayscale opacity-80 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-300" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-9l1.96 2.5H17V9.5h2.5zm-1.5 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
+                        </svg>
+                        <div className="flex flex-col text-left border-l border-current/20 pl-4">
+                          <span className="text-[10px] font-black uppercase tracking-widest leading-none">Track Direct via</span>
+                          <span className="text-base font-bold uppercase tracking-widest leading-none mt-1.5">M&P Courier</span>
+                        </div>
+                        <svg className="w-6 h-6 ml-2 group-hover:translate-x-2 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                      </a>
+                    )}
+
                   </div>
                 )}
 
