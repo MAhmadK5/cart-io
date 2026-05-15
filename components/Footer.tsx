@@ -207,6 +207,19 @@ export default function Footer() {
               <li className="pt-2"><Link href="/track" className="hover:text-white transition-colors">Track Order</Link></li>
               <li><Link href="/faq" className="hover:text-white transition-colors">FAQ</Link></li>
             </ul>
+
+            {/* ✨ NEW: OPERATIONAL HOURS ✨ */}
+            <div className="mt-8 pt-6 border-t border-white/5">
+              <h4 className="text-[10px] font-black text-white uppercase tracking-[0.2em] mb-3 flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
+                Operational Hours
+              </h4>
+              <div className="flex flex-col gap-1">
+                <p className="text-xs text-zinc-400 font-light">Monday — Sunday</p>
+                <p className="text-sm font-black text-white tracking-widest">06:00 AM <span className="text-zinc-600">—</span> 12:00 AM</p>
+              </div>
+            </div>
+
           </div>
 
           {/* Legal */}
