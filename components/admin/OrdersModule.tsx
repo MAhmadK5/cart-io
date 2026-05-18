@@ -9,7 +9,7 @@ export default function OrdersModule() {
   const [metrics, setMetrics] = useState({ revenue: 0, pending: 0, total: 0, aov: 0 });
   const [activeTab, setActiveTab] = useState('All');
   
-  const tabs = ['All', 'Processing', 'Dispatched', 'Delivered', 'Cancelled'];
+  const tabs = ['All', 'Processing', 'Dispatched', 'Delivered', 'Returned', 'Cancelled'];
 
   // ✨ MODAL STATES ✨
   const [infoModalOrder, setInfoModalOrder] = useState<any | null>(null);
@@ -36,7 +36,8 @@ export default function OrdersModule() {
     if (data) {
       const formatted = data.map(o => ({ ...o, status: o.status === 'Shipped' ? 'Dispatched' : (o.status || 'Processing') }));
       setOrders(formatted);
-      const valid = formatted.filter(o => o.status !== 'Cancelled');
+      
+      const valid = formatted.filter(o => o.status !== 'Cancelled' && o.status !== 'Returned');
       const rev = valid.reduce((sum, o) => sum + Number(o.total_amount), 0);
       setMetrics({ 
         revenue: rev, 
@@ -126,8 +127,10 @@ export default function OrdersModule() {
 
   const getOrderMessage = (order: any) => {
     let text = "";
+    
+    // ✨ FIXED LEOPARDS TRACKING LINK ✨
     const trackingLink = order.courier_partner === 'Leopards' 
-      ? 'https://www.leopardscourier.com/tracking' 
+      ? 'https://pk.leopardscourier.com/tracking' 
       : 'https://mulphilog.com/tracking/';
 
     switch(order.status) {
@@ -139,6 +142,9 @@ export default function OrdersModule() {
         break;
       case 'Delivered':
         text = `Hello ${order.customer_name}! 🎉\n\nYour CARTIO order (${order.order_id}) has been marked as delivered. We hope you love your new assets! We would love to hear your feedback on our website.`;
+        break;
+      case 'Returned':
+        text = `Hello ${order.customer_name}.\n\nYour CARTIO order (${order.order_id}) has been marked as returned to our facility. If you have any concerns or wish to request a reshipment, please contact our support team.`;
         break;
       case 'Cancelled':
         text = `Hello ${order.customer_name}.\n\nYour CARTIO order (${order.order_id}) has been cancelled. If you have any questions or need to place a new order, we are here to help!`;
@@ -313,14 +319,19 @@ export default function OrdersModule() {
       ) : (
         <div className="grid gap-6">
           {filteredOrders.map((order) => {
-            const isCancelled = order.status === 'Cancelled';
+            const isCancelled = order.status === 'Cancelled' || order.status === 'Returned';
             const isProcessing = order.status === 'Processing';
-            const statusColor = isProcessing ? 'text-purple-400' : order.status === 'Dispatched' ? 'text-blue-400' : order.status === 'Delivered' ? 'text-green-400' : 'text-red-400';
+            const isReturned = order.status === 'Returned';
+            
+            const glowColor = isProcessing ? 'bg-purple-500' : 
+                              order.status === 'Dispatched' ? 'bg-blue-500' : 
+                              order.status === 'Delivered' ? 'bg-green-500' : 
+                              isReturned ? 'bg-orange-500' : 'bg-red-500';
             
             return (
               <div key={order.id} className="relative group bg-zinc-900/40 backdrop-blur-xl border border-white/10 hover:border-white/30 rounded-[2.5rem] p-6 md:p-8 shadow-xl transition-all duration-500 overflow-hidden">
                 {/* Ambient Status Glow */}
-                <div className={`absolute top-0 right-0 w-64 h-64 blur-[80px] opacity-0 group-hover:opacity-20 transition-opacity duration-700 pointer-events-none rounded-full ${isProcessing ? 'bg-purple-500' : order.status === 'Dispatched' ? 'bg-blue-500' : order.status === 'Delivered' ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                <div className={`absolute top-0 right-0 w-64 h-64 blur-[80px] opacity-0 group-hover:opacity-20 transition-opacity duration-700 pointer-events-none rounded-full ${glowColor}`}></div>
                 
                 {/* CARD HEADER */}
                 <div className="flex flex-wrap items-center justify-between gap-4 mb-6 border-b border-white/5 pb-6 relative z-10">
@@ -348,12 +359,14 @@ export default function OrdersModule() {
                         isProcessing ? 'bg-purple-500/10 text-purple-400 border-purple-500/30 hover:bg-purple-500/20' :
                         order.status === 'Dispatched' ? 'bg-blue-500/10 text-blue-400 border-blue-500/30 hover:bg-blue-500/20' :
                         order.status === 'Delivered' ? 'bg-green-500/10 text-green-400 border-green-500/30 hover:bg-green-500/20' :
+                        isReturned ? 'bg-orange-500/10 text-orange-400 border-orange-500/30 hover:bg-orange-500/20' :
                         'bg-red-500/10 text-red-400 border-red-500/30 hover:bg-red-500/20'
                       }`}
                     >
                       <option value="Processing" className="bg-zinc-900 text-white">Processing</option>
                       <option value="Dispatched" className="bg-zinc-900 text-white">Dispatched</option>
                       <option value="Delivered" className="bg-zinc-900 text-white">Delivered</option>
+                      <option value="Returned" className="bg-zinc-900 text-white">Returned</option>
                       <option value="Cancelled" className="bg-zinc-900 text-white">Cancelled</option>
                     </select>
                   </div>
@@ -485,15 +498,15 @@ export default function OrdersModule() {
         <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 animate-fade-in">
           <div className="absolute inset-0 bg-black/90 backdrop-blur-md" onClick={() => setStatusModal(null)}></div>
           <div className="relative bg-zinc-950 border border-white/10 rounded-[2.5rem] w-full max-w-md p-8 sm:p-10 shadow-[0_0_50px_rgba(59,130,246,0.15)] text-center overflow-hidden">
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 bg-blue-500/10 blur-[80px] rounded-full pointer-events-none"></div>
+            <div className={`absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 blur-[80px] rounded-full pointer-events-none ${statusModal.newStatus === 'Returned' ? 'bg-orange-500/10' : 'bg-blue-500/10'}`}></div>
 
-            <div className="w-16 h-16 bg-blue-500/20 border border-blue-500/30 text-blue-500 rounded-full flex items-center justify-center mx-auto mb-6 relative z-10">
+            <div className={`w-16 h-16 border rounded-full flex items-center justify-center mx-auto mb-6 relative z-10 ${statusModal.newStatus === 'Returned' ? 'bg-orange-500/20 border-orange-500/30 text-orange-500' : 'bg-blue-500/20 border-blue-500/30 text-blue-500'}`}>
               <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
             </div>
             
             <h2 className="text-2xl font-black text-white uppercase tracking-tighter mb-4 relative z-10">Confirm Status Update</h2>
             <p className="text-sm text-zinc-400 font-light mb-8 relative z-10">
-              You are moving this order from <span className="font-bold text-white">{statusModal.oldStatus}</span> to <span className="font-bold text-blue-400">{statusModal.newStatus}</span>. 
+              You are moving this order from <span className="font-bold text-white">{statusModal.oldStatus}</span> to <span className={`font-bold ${statusModal.newStatus === 'Returned' ? 'text-orange-400' : 'text-blue-400'}`}>{statusModal.newStatus}</span>. 
             </p>
 
             {statusModal.newStatus === 'Dispatched' && (
@@ -525,7 +538,7 @@ export default function OrdersModule() {
 
             <div className="flex flex-col sm:flex-row gap-4 mt-2 relative z-10">
               <button onClick={() => setStatusModal(null)} className="w-full sm:flex-1 py-4 bg-white/5 text-white rounded-xl font-black text-xs uppercase tracking-widest hover:bg-white/10 transition-colors border border-white/10">Cancel</button>
-              <button onClick={confirmStatusChange} disabled={isUpdatingStatus} className="w-full sm:flex-1 py-4 bg-blue-600 text-white rounded-xl font-black text-xs uppercase tracking-widest hover:bg-blue-500 transition-colors disabled:opacity-50 flex justify-center items-center shadow-[0_0_20px_rgba(37,99,235,0.4)]">
+              <button onClick={confirmStatusChange} disabled={isUpdatingStatus} className={`w-full sm:flex-1 py-4 text-white rounded-xl font-black text-xs uppercase tracking-widest transition-colors disabled:opacity-50 flex justify-center items-center ${statusModal.newStatus === 'Returned' ? 'bg-orange-600 hover:bg-orange-500 shadow-[0_0_20px_rgba(234,88,12,0.4)]' : 'bg-blue-600 hover:bg-blue-500 shadow-[0_0_20px_rgba(37,99,235,0.4)]'}`}>
                 {isUpdatingStatus ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span> : 'Execute Update'}
               </button>
             </div>
