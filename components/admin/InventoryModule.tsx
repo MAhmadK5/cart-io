@@ -105,13 +105,15 @@ export default function InventoryModule() {
     setIsSubmittingPromo(true);
     try {
       const payload = { ...promoForm };
-      await supabase.from('promotional_banners').insert([payload]);
+      const { error } = await supabase.from('promotional_banners').insert([payload]);
+      if (error) throw error;
       
       setIsPromoModalOpen(false);
       setPromoForm({ title: '', image: '', link: '', is_active: false });
       fetchPromotions();
-    } catch (err) {
-      alert("Failed to save promotion.");
+    } catch (err: any) {
+      console.error(err);
+      alert(`Failed to save promotion: ${err.message}`);
     } finally {
       setIsSubmittingPromo(false);
     }
@@ -151,7 +153,8 @@ export default function InventoryModule() {
     setIsSubmittingCategory(true);
     try {
       if (editingCategory) {
-        await supabase.from('categories').update({ name: categoryInput.trim() }).eq('id', editingCategory.id);
+        const { error } = await supabase.from('categories').update({ name: categoryInput.trim() }).eq('id', editingCategory.id);
+        if (error) throw error;
         await supabase.from('products').update({ category: categoryInput.trim() }).eq('category', editingCategory.name);
       } else {
         const { error } = await supabase.from('categories').insert([{ name: categoryInput.trim() }]);
@@ -161,8 +164,9 @@ export default function InventoryModule() {
       setIsCategoryModalOpen(false);
       fetchCategories();
       fetchInventory(); 
-    } catch (err) {
-      alert("Failed to save department.");
+    } catch (err: any) {
+      console.error(err);
+      alert(`Failed to save department: ${err.message}`);
     } finally {
       setIsSubmittingCategory(false);
     }
@@ -170,7 +174,6 @@ export default function InventoryModule() {
 
   const handleDeleteCategory = async (cat: Category) => {
     const productsInCat = inventory.filter(p => p.category === cat.name).length;
-    
     const confirmMsg = `CRITICAL WARNING:\n\nAre you sure you want to delete the "${cat.name}" department?\n\nThis will permanently nuke ALL ${productsInCat} assets currently inside this category. This action cannot be undone.`;
     
     if (confirm(confirmMsg)) {
@@ -198,7 +201,6 @@ export default function InventoryModule() {
       return;
     }
     setEditingId(null);
-    // ✨ Initialize colors as empty array ✨
     setProductForm({ 
       name: '', price: '', original_price: '', category: categories[0].name, tag: '', stock: '', description: '', colors: [], allowCustomText: false 
     });
@@ -210,7 +212,6 @@ export default function InventoryModule() {
 
   const openEditProductModal = (product: any) => {
     setEditingId(product.id);
-    // ✨ Load colors directly into the array ✨
     setProductForm({
       name: product.name, 
       price: String(product.price), 
@@ -246,7 +247,6 @@ export default function InventoryModule() {
     setProductImages(productImages.filter((_, idx) => idx !== indexToRemove));
   };
 
-  // ✨ NEW: VISUAL COLOR CONTROLLERS ✨
   const handleAddColor = () => {
     if (tempColor.trim() && !productForm.colors.includes(tempColor.trim())) {
       setProductForm({ ...productForm, colors: [...productForm.colors, tempColor.trim()] });
@@ -258,7 +258,7 @@ export default function InventoryModule() {
     setProductForm({ ...productForm, colors: productForm.colors.filter(c => c !== colorToRemove) });
   };
 
-  const handleSaveProduct = async (e: React.FormEvent) => {
+const handleSaveProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     if (productImages.length === 0) {
       alert("Please add at least one image to the gallery.");
@@ -280,21 +280,23 @@ export default function InventoryModule() {
         colors: productForm.colors.length > 0 ? productForm.colors : null, 
         allowCustomText: productForm.allowCustomText, 
         rating: 5.0, 
-        reviews: 0, 
-        aiMatch: 95
+        reviews: 0 
+        // ❌ aiMatch: 95 has been completely removed
       };
 
       if (editingId) {
-        await supabase.from('products').update(payload).eq('id', editingId);
+        const { error } = await supabase.from('products').update(payload).eq('id', editingId);
+        if (error) throw error;
       } else {
-        await supabase.from('products').insert([payload]);
+        const { error } = await supabase.from('products').insert([payload]);
+        if (error) throw error;
       }
 
       setIsProductModalOpen(false);
       fetchInventory();
     } catch (err: any) {
-      console.error(err);
-      alert(`Database Error: ${err.message}`);
+      console.error("Supabase Save Error:", err);
+      alert(`Database Error: ${err.message}\n\nPlease check if your Supabase 'products' table has all required columns matching this payload.`);
     } finally {
       setIsSubmittingProduct(false);
     }
@@ -506,7 +508,7 @@ export default function InventoryModule() {
       {isProductModalOpen && (
         <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 sm:p-8 animate-fade-in">
           <div className="absolute inset-0 bg-black/90 backdrop-blur-2xl" onClick={() => setIsProductModalOpen(false)}></div>
-          <div className="relative bg-zinc-950/80 border border-white/10 rounded-[2.5rem] w-full max-w-[1400px] max-h-[90vh] overflow-hidden shadow-2xl flex flex-col lg:flex-row">
+          <div className="relative bg-zinc-950 border border-white/10 rounded-[2.5rem] w-full max-w-[1400px] max-h-[90vh] overflow-hidden shadow-2xl flex flex-col lg:flex-row">
             <button onClick={() => setIsProductModalOpen(false)} className="absolute top-6 right-6 w-12 h-12 bg-white/5 hover:bg-white hover:text-black text-white rounded-full flex items-center justify-center transition-all z-50">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
@@ -556,7 +558,7 @@ export default function InventoryModule() {
                       <button type="button" onClick={() => setActivePreviewImage(img)} className={`w-20 h-20 rounded-2xl overflow-hidden border-2 transition-all ${activePreviewImage === img ? 'border-purple-500 opacity-100' : 'border-transparent opacity-50 hover:opacity-100'}`}>
                         <img src={img} className="w-full h-full object-cover" alt={`thumb-${idx}`} />
                       </button>
-                      <button type="button" onClick={(e) => { e.stopPropagation(); handleRemoveImage(idx); }} className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button type="button" onClick={(e) => { e.stopPropagation(); handleRemoveImage(idx); }} className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10">
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                       </button>
                     </div>
@@ -565,96 +567,121 @@ export default function InventoryModule() {
               )}
             </div>
 
-            {/* Right Form Side */}
-            <div className="w-full lg:w-[55%] p-8 sm:p-14 overflow-y-auto custom-scrollbar">
-              <h2 className="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter mb-10">{editingId ? 'Edit Asset' : 'Add New Asset'}</h2>
-              <form onSubmit={handleSaveProduct} className="space-y-10">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                  <div className="md:col-span-2">
-                    <input required value={productForm.name} onChange={(e) => setProductForm({...productForm, name: e.target.value})} type="text" placeholder="Product Name" className="w-full bg-transparent border-b border-white/20 text-white text-xl py-4 focus:outline-none focus:border-purple-500 transition-colors placeholder:text-zinc-600 font-light rounded-none" />
-                  </div>
-                  
+            {/* ✨ Right Form Side ✨ */}
+            <div className="w-full lg:w-[55%] p-8 lg:p-12 overflow-y-auto custom-scrollbar relative">
+              <div className="mb-8">
+                <p className="text-[10px] font-black text-purple-500 uppercase tracking-[0.3em] mb-2">Asset Configuration</p>
+                <h2 className="text-3xl font-black text-white uppercase tracking-tighter">{editingId ? 'Edit Asset' : 'Mint New Asset'}</h2>
+              </div>
+
+              <form onSubmit={handleSaveProduct} className="space-y-6">
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <input required value={productForm.price} onChange={(e) => setProductForm({...productForm, price: e.target.value})} type="number" placeholder="Sale Price (Rs.)" className="w-full bg-transparent border-b border-white/20 text-white text-xl py-4 focus:outline-none focus:border-purple-500 transition-colors placeholder:text-zinc-600 font-light rounded-none" />
+                    <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-2 block">Item Name</label>
+                    <input required value={productForm.name} onChange={(e) => setProductForm({...productForm, name: e.target.value})} type="text" placeholder="e.g. Minimalist Watch" className="w-full bg-black/50 border border-white/10 text-white px-5 py-4 rounded-xl focus:outline-none focus:border-purple-500 transition-colors" />
                   </div>
-
                   <div>
-                    <input value={productForm.original_price} onChange={(e) => setProductForm({...productForm, original_price: e.target.value})} type="number" placeholder="Original Price (Optional)" className="w-full bg-transparent border-b border-white/20 text-zinc-400 text-xl py-4 focus:outline-none focus:border-red-500 transition-colors font-light rounded-none placeholder:text-zinc-600" />
-                    <p className="text-[10px] text-zinc-500 mt-2 italic">Fill this higher than Sale Price to put item on SALE</p>
-                  </div>
-
-                  <div>
-                    <input required value={productForm.stock} onChange={(e) => setProductForm({...productForm, stock: e.target.value})} type="number" placeholder="Inventory Count" className="w-full bg-transparent border-b border-white/20 text-white text-xl py-4 focus:outline-none focus:border-purple-500 transition-colors placeholder:text-zinc-600 font-light rounded-none" />
-                  </div>
-
-                  <div>
-                    <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-2 block">Department</label>
-                    <select required value={productForm.category} onChange={(e) => setProductForm({...productForm, category: e.target.value})} className="w-full bg-black/50 border border-white/10 text-white text-lg px-5 py-4 focus:outline-none focus:border-purple-500 transition-colors rounded-xl cursor-pointer appearance-none">
-                      {categories.map(cat => <option key={cat.id} value={cat.name} className="bg-zinc-900">{cat.name}</option>)}
-                    </select>
-                  </div>
-
-                  <div className="md:col-span-2">
-                    <input value={productForm.tag} onChange={(e) => setProductForm({...productForm, tag: e.target.value})} type="text" placeholder="Special Tag (e.g. Rare)" className="w-full bg-transparent border-b border-white/20 text-white text-xl py-4 focus:outline-none focus:border-purple-500 transition-colors placeholder:text-zinc-600 font-light rounded-none" />
-                  </div>
-
-                  {/* ✨ NEW VISUAL COLOR SELECTOR ✨ */}
-                  <div className="md:col-span-2 bg-zinc-900/40 p-6 rounded-2xl border border-white/5">
-                    <p className="text-xs font-bold text-purple-400 uppercase tracking-widest mb-4">Available Colors</p>
-                    <div className="flex gap-4 mb-4">
-                      <input 
-                        value={tempColor} onChange={(e) => setTempColor(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddColor(); }}}
-                        type="text" placeholder="Hex (#FF0000) or Name (black)" className="flex-1 bg-black/50 border border-white/10 text-white text-lg px-6 py-4 focus:outline-none focus:border-purple-500 transition-colors rounded-xl font-light" 
-                      />
-                      <button type="button" onClick={handleAddColor} className="px-8 bg-purple-600 hover:bg-purple-500 text-white font-black uppercase tracking-widest rounded-xl transition-all text-xs">Add Color</button>
-                    </div>
-                    {productForm.colors.length > 0 && (
-                      <div className="flex flex-wrap gap-3">
-                        {productForm.colors.map(color => (
-                          <div key={color} className="flex items-center gap-2 bg-black border border-white/10 px-4 py-2 rounded-full">
-                            <span className="w-4 h-4 rounded-full border border-white/20" style={{ backgroundColor: color }}></span>
-                            <span className="text-xs text-white uppercase font-bold tracking-widest">{color}</span>
-                            <button type="button" onClick={() => handleRemoveColor(color)} className="text-red-500 ml-2 hover:text-red-400 font-bold">✕</button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="md:col-span-2">
-                    <label className="flex items-center justify-between cursor-pointer group py-4 border-b border-white/20 transition-all">
-                      <span className="text-xl text-zinc-500 group-hover:text-white transition-colors font-light">Allow Custom Note/Engraving</span>
-                      <div className="relative">
-                        <input type="checkbox" className="sr-only" checked={productForm.allowCustomText} onChange={(e) => setProductForm({...productForm, allowCustomText: e.target.checked})} />
-                        <div className={`block w-12 h-7 rounded-full transition-colors duration-300 ${productForm.allowCustomText ? 'bg-purple-500' : 'bg-zinc-800'}`}></div>
-                        <div className={`dot absolute left-1 top-1 bg-white w-5 h-5 rounded-full transition-transform duration-300 ${productForm.allowCustomText ? 'transform translate-x-5' : ''}`}></div>
-                      </div>
-                    </label>
-                  </div>
-                  
-                  <div className="md:col-span-2 bg-zinc-900/40 p-6 rounded-2xl border border-white/5">
-                    <p className="text-xs font-bold text-purple-400 uppercase tracking-widest mb-4">Product Gallery ({productImages.length} Images)</p>
-                    <div className="flex gap-4">
-                      <input 
-                        value={tempImageUrl} onChange={(e) => setTempImageUrl(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddImage(); }}}
-                        type="url" placeholder="Paste Supabase Storage URL here" className="flex-1 bg-black/50 border border-white/10 text-white text-lg px-6 py-4 focus:outline-none focus:border-purple-500 transition-colors rounded-xl font-light" 
-                      />
-                      <button type="button" onClick={handleAddImage} className="px-8 bg-purple-600 hover:bg-purple-500 text-white font-black uppercase tracking-widest rounded-xl transition-all text-xs">Add</button>
-                    </div>
-                  </div>
-
-                  <div className="md:col-span-2">
-                    <textarea required value={productForm.description} onChange={(e) => setProductForm({...productForm, description: e.target.value})} placeholder="Product Description..." rows={3} className="w-full bg-transparent border-b border-white/20 text-white text-xl py-4 focus:outline-none focus:border-purple-500 transition-colors placeholder:text-zinc-600 font-light rounded-none resize-none"></textarea>
+                    <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-2 block">Tag (Optional)</label>
+                    <input value={productForm.tag} onChange={(e) => setProductForm({...productForm, tag: e.target.value})} type="text" placeholder="e.g. Best Seller" className="w-full bg-black/50 border border-white/10 text-white px-5 py-4 rounded-xl focus:outline-none focus:border-purple-500 transition-colors" />
                   </div>
                 </div>
-                <button type="submit" disabled={isSubmittingProduct} className="w-full py-6 bg-white text-black hover:bg-purple-600 hover:text-white font-black text-sm uppercase tracking-[0.3em] transition-all shadow-xl mt-6">
-                  {isSubmittingProduct ? 'Saving Ledger...' : (editingId ? 'Update Asset' : 'Publish Asset')}
-                </button>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-2 block">Selling Price (Rs)</label>
+                    <input required value={productForm.price} onChange={(e) => setProductForm({...productForm, price: e.target.value})} type="number" placeholder="0" className="w-full bg-black/50 border border-white/10 text-white px-5 py-4 rounded-xl focus:outline-none focus:border-purple-500 transition-colors" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-2 block">Original Price (For Sales)</label>
+                    <input value={productForm.original_price} onChange={(e) => setProductForm({...productForm, original_price: e.target.value})} type="number" placeholder="0 (Optional)" className="w-full bg-black/50 border border-white/10 text-white px-5 py-4 rounded-xl focus:outline-none focus:border-purple-500 transition-colors" />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-2 block">Department</label>
+                    <select required value={productForm.category} onChange={(e) => setProductForm({...productForm, category: e.target.value})} className="w-full bg-black/50 border border-white/10 text-white px-5 py-4 rounded-xl focus:outline-none focus:border-purple-500 transition-colors appearance-none cursor-pointer">
+                      {categories.map(c => <option key={c.id} value={c.name} className="bg-zinc-900">{c.name}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-2 block">Stock Count</label>
+                    <input required value={productForm.stock} onChange={(e) => setProductForm({...productForm, stock: e.target.value})} type="number" placeholder="0" className="w-full bg-black/50 border border-white/10 text-white px-5 py-4 rounded-xl focus:outline-none focus:border-purple-500 transition-colors" />
+                  </div>
+                </div>
+
+                {/* ✨ VISUAL COLOR ENGINE ✨ */}
+                <div>
+                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-2 block">Available Finishes (Colors)</label>
+                  <div className="flex gap-2">
+                    <input 
+                      value={tempColor} 
+                      onChange={(e) => setTempColor(e.target.value)} 
+                      type="text" 
+                      placeholder="HEX code (e.g., #000000) or name" 
+                      className="flex-1 bg-black/50 border border-white/10 text-white px-5 py-4 rounded-xl focus:outline-none focus:border-purple-500 transition-colors" 
+                      onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddColor())}
+                    />
+                    <button type="button" onClick={handleAddColor} className="px-6 bg-zinc-900 hover:bg-white hover:text-black text-white rounded-xl font-black text-xs uppercase tracking-widest transition-all">Add</button>
+                  </div>
+                  
+                  {productForm.colors.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-4">
+                      {productForm.colors.map(color => (
+                        <div key={color} className="flex items-center gap-2 bg-zinc-900 border border-white/10 pl-3 pr-1 py-1 rounded-full">
+                          <span className="w-3 h-3 rounded-full border border-white/20" style={{ backgroundColor: color }}></span>
+                          <span className="text-xs font-mono text-zinc-400 uppercase">{color}</span>
+                          <button type="button" onClick={() => handleRemoveColor(color)} className="w-5 h-5 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white rounded-full flex items-center justify-center transition-colors">
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-2 block">Gallery Image URL</label>
+                  <div className="flex gap-2">
+                    <input 
+                      value={tempImageUrl} 
+                      onChange={(e) => setTempImageUrl(e.target.value)} 
+                      type="url" 
+                      placeholder="Paste Supabase storage URL..." 
+                      className="flex-1 bg-black/50 border border-white/10 text-white px-5 py-4 rounded-xl focus:outline-none focus:border-purple-500 transition-colors"
+                      onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddImage())}
+                    />
+                    <button type="button" onClick={handleAddImage} className="px-6 bg-zinc-900 hover:bg-white hover:text-black text-white rounded-xl font-black text-xs uppercase tracking-widest transition-all">Add</button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-2 block">Item Description</label>
+                  <textarea required value={productForm.description} onChange={(e) => setProductForm({...productForm, description: e.target.value})} rows={4} placeholder="Detailed product description..." className="w-full bg-black/50 border border-white/10 text-white px-5 py-4 rounded-xl focus:outline-none focus:border-purple-500 transition-colors resize-none"></textarea>
+                </div>
+
+                <label className="flex items-center gap-4 bg-purple-500/10 p-4 rounded-xl border border-purple-500/20 cursor-pointer hover:border-purple-500/40 transition-colors">
+                  <input type="checkbox" className="w-5 h-5 accent-purple-500" checked={productForm.allowCustomText} onChange={(e) => setProductForm({...productForm, allowCustomText: e.target.checked})} />
+                  <div>
+                    <span className="block text-sm font-bold text-white uppercase tracking-widest">Enable Custom Text</span>
+                    <span className="block text-[10px] text-zinc-400 mt-1">Allow customers to input personalized text for this item (e.g. engraved name).</span>
+                  </div>
+                </label>
+
+                <div className="flex gap-3 pt-4 border-t border-white/10">
+                  <button type="button" onClick={() => setIsProductModalOpen(false)} className="flex-1 py-4 bg-zinc-900 hover:bg-zinc-800 text-white rounded-xl font-black text-xs uppercase tracking-widest transition-all">Cancel</button>
+                  <button type="submit" disabled={isSubmittingProduct} className="flex-[2] py-4 bg-purple-600 hover:bg-purple-500 text-white rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-[0_0_20px_rgba(147,51,234,0.3)] disabled:opacity-50">
+                    {isSubmittingProduct ? 'Syncing with Ledger...' : (editingId ? 'Save Changes' : 'Mint Asset to Database')}
+                  </button>
+                </div>
               </form>
+
             </div>
           </div>
         </div>
       )}
+
     </>
   );
 }

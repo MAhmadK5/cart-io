@@ -40,7 +40,7 @@ export default function CheckoutPage() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // ✨ NEW: VALIDATE & APPLY PROMO CODE ✨
+  // ✨ VALIDATE & APPLY PROMO CODE ✨
   const handleApplyPromo = async (e: React.FormEvent) => {
     e.preventDefault();
     setPromoError('');
@@ -108,6 +108,7 @@ export default function CheckoutPage() {
     );
   }
 
+  // ✨ THE NEW RELATIONAL CHECKOUT ENGINE ✨
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault(); 
     setIsProcessing(true);
@@ -116,11 +117,10 @@ export default function CheckoutPage() {
       const newOrderId = "CIO-" + Math.random().toString(36).substring(2, 8).toUpperCase();
       const customerName = `${formData.firstName} ${formData.lastName}`.trim();
       
-      // 1. Save Order to Database
-      const { error } = await supabase
+      // 1. Save Main Order to Database (Return the new ID)
+      const { data: orderData, error: orderError } = await supabase
         .from('orders')
-        .insert([
-          {
+        .insert([{
             order_id: newOrderId,
             customer_email: formData.email,
             customer_phone: formData.phone,
@@ -131,17 +131,38 @@ export default function CheckoutPage() {
             payment_method: paymentMethod,
             subtotal: subtotal,
             shipping_fee: shipping,
-            discount_code: appliedPromo ? appliedPromo.code : null, // ✨ RECORD DISCOUNT ✨
-            discount_amount: discountAmount, // ✨ RECORD DISCOUNT ✨
+            discount_code: appliedPromo ? appliedPromo.code : null,
+            discount_amount: discountAmount,
             total_amount: total,
-            items: cartItems, 
+            items: cartItems, // Keeping JSONB as a backup for easy receipt parsing
             status: 'Processing'
-          }
-        ]);
+        }])
+        .select('id')
+        .single();
 
-      if (error) throw error;
+      if (orderError) throw orderError;
 
-      // 2. Increment Promo Code Usage (if used)
+      // 2. Insert into relational `order_items` table
+      const orderItemsPayload = cartItems.map(item => ({
+        order_id: orderData.id,
+        product_id: item.id,
+        quantity: item.quantity,
+        price_at_purchase: item.price
+      }));
+      
+      const { error: itemsError } = await supabase.from('order_items').insert(orderItemsPayload);
+      if (itemsError) console.error("Non-fatal: Failed to log relational items", itemsError);
+
+      // 3. Decrement Stock from `products` table
+      for (const item of cartItems) {
+        const { data: pData } = await supabase.from('products').select('stock').eq('id', item.id).single();
+        if (pData && pData.stock !== null) {
+          const newStock = Math.max(0, pData.stock - item.quantity); // Prevent negative stock
+          await supabase.from('products').update({ stock: newStock }).eq('id', item.id);
+        }
+      }
+
+      // 4. Increment Promo Code Usage (if used)
       if (appliedPromo) {
         await supabase
           .from('promo_codes')
@@ -149,7 +170,7 @@ export default function CheckoutPage() {
           .eq('id', appliedPromo.id);
       }
 
-      // 3. Trigger Email API
+      // 5. Trigger Email API
       try {
         await fetch('/api/send-receipt', {
           method: 'POST',
@@ -185,9 +206,9 @@ export default function CheckoutPage() {
       clearCart();
       setOrderSuccess(true);
 
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error placing order:", error);
-      alert("Failed to securely process your order. Please try again.");
+      alert(`Transaction Failed: ${error.message}. Please check your connection.`);
     } finally {
       setIsProcessing(false);
     }
@@ -197,7 +218,6 @@ export default function CheckoutPage() {
   if (orderSuccess && completedOrder) {
     const waNumber = "923196514249";
     
-    // ✨ UPDATED: Added discount line to WhatsApp message ✨
     let waMessageText = `Hello CARTIO! 🚀\n\nI just placed an order on your website.\n\n*Order ID:* ${completedOrder.id}\n*Name:* ${completedOrder.name}\n`;
     if (completedOrder.discountAmount > 0) {
       waMessageText += `*Discount Applied:* ${completedOrder.discountCode} (-Rs. ${completedOrder.discountAmount.toLocaleString()})\n`;
@@ -244,6 +264,7 @@ export default function CheckoutPage() {
                 <div>
                   <h3 className="text-lg font-black text-zinc-500 uppercase tracking-[0.3em] mb-8 print:text-gray-500">Product Details</h3>
                   <div className="space-y-8">
+                    {/* ✨ FIX: Used index for key to prevent duplicate React ID warnings on receipt ✨ */}
                     {completedOrder.items.map((item: any, index: number) => (
                       <div key={index} className="flex justify-between items-center gap-6">
                         <div className="flex items-center gap-6">
@@ -289,7 +310,6 @@ export default function CheckoutPage() {
                     </span>
                   </div>
 
-                  {/* ✨ SHOW DISCOUNT ON RECEIPT ✨ */}
                   {completedOrder.discountAmount > 0 && (
                     <div className="flex justify-between text-xl text-purple-400 print:text-black font-bold tracking-wide">
                       <span>Discount ({completedOrder.discountCode})</span>
@@ -463,8 +483,9 @@ export default function CheckoutPage() {
                 <h2 className="text-3xl font-black text-white mb-12 uppercase tracking-tighter border-b border-white/10 pb-8">Order Summary</h2>
                 
                 <div className="space-y-8 mb-12 max-h-96 overflow-y-auto custom-scrollbar pr-6">
-                  {cartItems.map((item) => (
-                    <div key={item.id} className="flex items-start gap-8">
+                  {/* ✨ FIX: Replaced key={item.id} with index to prevent duplicate key crashes ✨ */}
+                  {cartItems.map((item, index) => (
+                    <div key={`${item.id}-${index}`} className="flex items-start gap-8">
                       <div className="w-24 h-24 bg-black flex items-center justify-center flex-shrink-0 relative border border-white/5">
                         <img src={item.image} alt={item.name} className="w-full h-full object-contain p-3 opacity-90" />
                         <span className="absolute -top-3 -right-3 w-8 h-8 bg-white text-black text-xs font-black rounded-full flex items-center justify-center z-10 shadow-lg">{item.quantity}</span>
@@ -493,7 +514,7 @@ export default function CheckoutPage() {
                   ))}
                 </div>
 
-                {/* ✨ NEW: PROMO CODE INPUT ✨ */}
+                {/* ✨ PROMO CODE INPUT ✨ */}
                 <div className="border-t border-white/10 pt-8 mb-8">
                   <p className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em] mb-4">Gift Card or Discount Code</p>
                   

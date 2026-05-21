@@ -1,5 +1,4 @@
 "use client";
-
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 
@@ -33,12 +32,21 @@ export default function OrdersModule() {
   const fetchOrders = async () => {
     setLoadingOrders(true);
     const { data } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
+    
     if (data) {
-      const formatted = data.map(o => ({ ...o, status: o.status === 'Shipped' ? 'Dispatched' : (o.status || 'Processing') }));
+      // Align DB 'pending' default to the UI 'Processing' tab
+      const formatted = data.map(o => {
+        let mappedStatus = o.status;
+        if (mappedStatus === 'pending') mappedStatus = 'Processing';
+        if (mappedStatus === 'Shipped') mappedStatus = 'Dispatched';
+        return { ...o, status: mappedStatus || 'Processing' };
+      });
+      
       setOrders(formatted);
       
       const valid = formatted.filter(o => o.status !== 'Cancelled' && o.status !== 'Returned');
       const rev = valid.reduce((sum, o) => sum + Number(o.total_amount), 0);
+      
       setMetrics({ 
         revenue: rev, 
         pending: formatted.filter(o => o.status === 'Processing').length, 
@@ -128,7 +136,6 @@ export default function OrdersModule() {
   const getOrderMessage = (order: any) => {
     let text = "";
     
-    // ✨ FIXED LEOPARDS TRACKING LINK ✨
     const trackingLink = order.courier_partner === 'Leopards' 
       ? 'https://pk.leopardscourier.com/tracking' 
       : 'https://mulphilog.com/tracking/';
@@ -162,7 +169,7 @@ export default function OrdersModule() {
       return;
     }
 
-    const itemsHtml = order.items.map((item: any) => `
+    const itemsHtml = (order.items || []).map((item: any) => `
       <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #e4e4e7; padding: 15px 0;">
         <div>
           <p style="margin: 0; font-weight: 800; font-size: 16px;">${item.quantity}x ${item.name}</p>
@@ -220,10 +227,10 @@ export default function OrdersModule() {
             ${itemsHtml}
           </div>
           <div class="totals">
-            <p>Subtotal: Rs. ${(order.subtotal || order.total_amount).toLocaleString()}</p>
-            <p>Logistics Fee: ${order.shipping_fee === 0 ? 'Complimentary' : `Rs. ${(order.shipping_fee || 0).toLocaleString()}`}</p>
-            ${order.discount_amount > 0 ? `<p>Discount (${order.discount_code}): -Rs. ${order.discount_amount.toLocaleString()}</p>` : ''}
-            <h2>Total: Rs. ${order.total_amount.toLocaleString()}</h2>
+            <p>Subtotal: Rs. ${Number(order.subtotal || order.total_amount).toLocaleString()}</p>
+            <p>Logistics Fee: ${Number(order.shipping_fee) === 0 ? 'Complimentary' : `Rs. ${Number(order.shipping_fee).toLocaleString()}`}</p>
+            ${Number(order.discount_amount) > 0 ? `<p>Discount (${order.discount_code}): -Rs. ${Number(order.discount_amount).toLocaleString()}</p>` : ''}
+            <h2>Total: Rs. ${Number(order.total_amount).toLocaleString()}</h2>
           </div>
           <div class="footer">
             <p>Thank you for shopping with CARTIO.</p>
@@ -392,7 +399,7 @@ export default function OrdersModule() {
                     <div>
                       <p className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em] mb-1">Total Valuation</p>
                       <p className={`text-3xl lg:text-4xl font-black tracking-tighter ${isCancelled ? 'text-zinc-600' : 'text-white'}`}>
-                        Rs. {order.total_amount.toLocaleString()}
+                        Rs. {Number(order.total_amount).toLocaleString()}
                       </p>
                     </div>
                   </div>
@@ -401,15 +408,15 @@ export default function OrdersModule() {
                   <div className="w-full lg:w-2/3 bg-black/50 rounded-3xl p-6 border border-white/5 overflow-hidden flex flex-col">
                     <div className="flex justify-between items-end mb-4">
                       <p className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em]">Asset Ledger</p>
-                      {(order.discount_amount > 0) && (
+                      {(Number(order.discount_amount) > 0) && (
                         <p className="text-[9px] font-black text-purple-400 uppercase tracking-widest border border-purple-500/30 px-2 py-1 rounded-md bg-purple-500/10">
-                          Promo: -Rs. {order.discount_amount.toLocaleString()}
+                          Promo ({order.discount_code}): -Rs. {Number(order.discount_amount).toLocaleString()}
                         </p>
                       )}
                     </div>
                     
                     <div className="flex gap-4 overflow-x-auto custom-scrollbar pb-2 flex-1 items-center">
-                      {order.items.map((item: any, idx: number) => (
+                      {(order.items || []).map((item: any, idx: number) => (
                         <div key={idx} className={`flex items-center gap-4 bg-zinc-900 border border-white/5 rounded-2xl p-3 shrink-0 w-[260px] ${isCancelled ? 'opacity-50 grayscale' : ''}`}>
                           <img src={item.image} alt={item.name} className="w-12 h-12 rounded-xl object-contain bg-black p-1 shrink-0" />
                           <div className="min-w-0 flex-1">
@@ -472,19 +479,35 @@ export default function OrdersModule() {
             <div className="space-y-8 border-t border-white/10 pt-8 relative z-10">
               <div>
                 <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-1">Encrypted Email</p>
-                <p className="text-lg text-white font-medium break-all">{infoModalOrder.customer_email}</p>
+                <p className="text-lg text-white flex items-center justify-between group">
+                  {infoModalOrder.customer_email}
+                  <button 
+                    onClick={() => copyToClipboard(infoModalOrder.customer_email)} 
+                    className="opacity-0 group-hover:opacity-100 text-purple-400 hover:text-white transition-opacity text-[10px] uppercase font-bold tracking-widest"
+                  >
+                    Copy
+                  </button>
+                </p>
               </div>
+
               <div>
-                <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-1">Direct Line</p>
-                <p className="text-lg text-white font-medium">{infoModalOrder.customer_phone}</p>
+                <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-1">Comms Link (Phone)</p>
+                <p className="text-lg text-white flex items-center justify-between group">
+                  {infoModalOrder.customer_phone}
+                  <button 
+                    onClick={() => copyToClipboard(infoModalOrder.customer_phone)} 
+                    className="opacity-0 group-hover:opacity-100 text-purple-400 hover:text-white transition-opacity text-[10px] uppercase font-bold tracking-widest"
+                  >
+                    Copy
+                  </button>
+                </p>
               </div>
-              <div>
-                <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-1">Destination Coordinates</p>
-                <p className="text-lg text-white font-medium leading-snug break-words">{infoModalOrder.shipping_address}<br/>{infoModalOrder.city} {infoModalOrder.postal_code}</p>
-              </div>
+
               <div>
                 <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-1">Payment Protocol</p>
-                <p className="text-lg text-purple-400 font-black uppercase tracking-widest">{infoModalOrder.payment_method === 'cod' ? 'Cash on Delivery' : 'Digital/Card'}</p>
+                <p className="text-lg text-white capitalize">
+                  {infoModalOrder.payment_method === 'cod' ? 'Cash on Delivery' : infoModalOrder.payment_method}
+                </p>
               </div>
             </div>
           </div>
@@ -492,54 +515,64 @@ export default function OrdersModule() {
       )}
 
       {/* ========================================= */}
-      {/* ✨ 2. STATUS CHANGE CONFIRMATION MODAL ✨ */}
+      {/* ✨ 2. STATUS OVERRIDE MODAL ✨ */}
       {/* ========================================= */}
       {statusModal && (
-        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 animate-fade-in">
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 sm:p-6 animate-fade-in">
           <div className="absolute inset-0 bg-black/90 backdrop-blur-md" onClick={() => setStatusModal(null)}></div>
-          <div className="relative bg-zinc-950 border border-white/10 rounded-[2.5rem] w-full max-w-md p-8 sm:p-10 shadow-[0_0_50px_rgba(59,130,246,0.15)] text-center overflow-hidden">
-            <div className={`absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 blur-[80px] rounded-full pointer-events-none ${statusModal.newStatus === 'Returned' ? 'bg-orange-500/10' : 'bg-blue-500/10'}`}></div>
-
-            <div className={`w-16 h-16 border rounded-full flex items-center justify-center mx-auto mb-6 relative z-10 ${statusModal.newStatus === 'Returned' ? 'bg-orange-500/20 border-orange-500/30 text-orange-500' : 'bg-blue-500/20 border-blue-500/30 text-blue-500'}`}>
-              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
-            </div>
+          <div className="relative bg-zinc-950 border border-white/10 rounded-[2.5rem] w-full max-w-md p-8 shadow-[0_0_50px_rgba(0,0,0,0.8)] overflow-hidden">
             
-            <h2 className="text-2xl font-black text-white uppercase tracking-tighter mb-4 relative z-10">Confirm Status Update</h2>
-            <p className="text-sm text-zinc-400 font-light mb-8 relative z-10">
-              You are moving this order from <span className="font-bold text-white">{statusModal.oldStatus}</span> to <span className={`font-bold ${statusModal.newStatus === 'Returned' ? 'text-orange-400' : 'text-blue-400'}`}>{statusModal.newStatus}</span>. 
-            </p>
+            <div className="mb-6 relative z-10">
+              <p className="text-[10px] font-black text-blue-500 uppercase tracking-[0.3em] mb-2">Protocol Override</p>
+              <h2 className="text-2xl font-black text-white uppercase tracking-tighter leading-none break-words">Update Status</h2>
+              <p className="text-zinc-400 text-sm mt-3 leading-relaxed">
+                Transition order status from <span className="text-white font-bold">{statusModal.oldStatus}</span> to <span className="text-blue-400 font-bold">{statusModal.newStatus}</span>?
+              </p>
+            </div>
 
+            {/* Conditionally show Tracking Info if marking as Dispatched */}
             {statusModal.newStatus === 'Dispatched' && (
-              <div className="mb-8 space-y-5 text-left relative z-10">
-                <div className="p-5 bg-black/40 border border-white/5 rounded-2xl">
-                  <label className="text-[10px] font-black text-blue-400 uppercase tracking-[0.2em] mb-2 block">Courier Partner</label>
+              <div className="mb-6 relative z-10 space-y-4">
+                <div>
+                  <label className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-1 block">Logistics Partner</label>
                   <select 
                     value={courierPartner}
                     onChange={(e) => setCourierPartner(e.target.value)}
-                    className="w-full bg-transparent text-white pb-2 border-b border-white/20 outline-none focus:border-blue-500 transition-all text-sm cursor-pointer"
+                    className="w-full bg-zinc-900 border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-blue-500/50 transition-colors cursor-pointer appearance-none"
                   >
-                    <option value="M&P" className="bg-zinc-900">M&P Courier</option>
-                    <option value="Leopards" className="bg-zinc-900">Leopards Courier</option>
+                    <option value="M&P">M&P</option>
+                    <option value="Leopards">Leopards</option>
+                    <option value="TCS">TCS</option>
+                    <option value="CallCourier">CallCourier</option>
                   </select>
                 </div>
-
-                <div className="p-5 bg-black/40 border border-white/5 rounded-2xl focus-within:border-blue-500/50 transition-colors">
-                  <label className="text-[10px] font-black text-blue-400 uppercase tracking-[0.2em] mb-2 block">Tracking Number <span className="text-red-500">*</span></label>
+                <div>
+                  <label className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-1 block">Tracking Number</label>
                   <input 
                     type="text" 
-                    placeholder="ENTER ID..." 
                     value={trackingInput}
                     onChange={(e) => setTrackingInput(e.target.value)}
-                    className="w-full bg-transparent text-white font-mono tracking-widest text-lg outline-none placeholder:text-zinc-700"
+                    placeholder="Enter Tracking ID..."
+                    className="w-full bg-zinc-900 border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-blue-500/50 transition-colors"
                   />
                 </div>
               </div>
             )}
 
-            <div className="flex flex-col sm:flex-row gap-4 mt-2 relative z-10">
-              <button onClick={() => setStatusModal(null)} className="w-full sm:flex-1 py-4 bg-white/5 text-white rounded-xl font-black text-xs uppercase tracking-widest hover:bg-white/10 transition-colors border border-white/10">Cancel</button>
-              <button onClick={confirmStatusChange} disabled={isUpdatingStatus} className={`w-full sm:flex-1 py-4 text-white rounded-xl font-black text-xs uppercase tracking-widest transition-colors disabled:opacity-50 flex justify-center items-center ${statusModal.newStatus === 'Returned' ? 'bg-orange-600 hover:bg-orange-500 shadow-[0_0_20px_rgba(234,88,12,0.4)]' : 'bg-blue-600 hover:bg-blue-500 shadow-[0_0_20px_rgba(37,99,235,0.4)]'}`}>
-                {isUpdatingStatus ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span> : 'Execute Update'}
+            <div className="flex gap-3 relative z-10 mt-8">
+              <button 
+                onClick={() => setStatusModal(null)} 
+                disabled={isUpdatingStatus} 
+                className="flex-1 px-4 py-3 bg-white/5 hover:bg-white/10 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border border-white/10 disabled:opacity-50"
+              >
+                Abort
+              </button>
+              <button 
+                onClick={confirmStatusChange} 
+                disabled={isUpdatingStatus} 
+                className="flex-1 px-4 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-[0_0_15px_rgba(59,130,246,0.3)] disabled:opacity-50"
+              >
+                {isUpdatingStatus ? 'Syncing...' : 'Execute'}
               </button>
             </div>
           </div>
@@ -547,57 +580,52 @@ export default function OrdersModule() {
       )}
 
       {/* ========================================= */}
-      {/* ✨ 3. STRICT DELETE CONFIRMATION MODAL ✨ */}
+      {/* ✨ 3. ERADICATE MODAL ✨ */}
       {/* ========================================= */}
       {deleteModal && (
-        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 animate-fade-in">
-          <div className="absolute inset-0 bg-black/95 backdrop-blur-lg" onClick={() => setDeleteModal(null)}></div>
-          <div className="relative bg-zinc-950 border border-red-500/30 rounded-[2.5rem] w-full max-w-md p-8 sm:p-10 shadow-[0_0_60px_rgba(239,68,68,0.2)] text-center overflow-hidden">
-            
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 bg-red-500/10 blur-[80px] rounded-full pointer-events-none"></div>
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 sm:p-6 animate-fade-in">
+          <div className="absolute inset-0 bg-black/90 backdrop-blur-md" onClick={() => setDeleteModal(null)}></div>
+          <div className="relative bg-zinc-950 border border-red-500/30 rounded-[2.5rem] w-full max-w-md p-8 shadow-[0_0_50px_rgba(239,68,68,0.2)] overflow-hidden">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-red-500/10 blur-[80px] rounded-full pointer-events-none"></div>
 
-            <div className="w-16 h-16 bg-red-500/10 border border-red-500/30 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6 relative z-10">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-20"></span>
-              <svg className="w-8 h-8 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+            <div className="mb-6 relative z-10">
+              <p className="text-[10px] font-black text-red-500 uppercase tracking-[0.3em] mb-2">Critical Warning</p>
+              <h2 className="text-2xl font-black text-white uppercase tracking-tighter leading-none break-words">Eradicate Data</h2>
+              <p className="text-zinc-400 text-sm mt-3 leading-relaxed">
+                This action is irreversible. Type <span className="text-white font-bold bg-white/10 px-1.5 py-0.5 rounded">delete</span> below to confirm permanent destruction of this order record.
+              </p>
             </div>
-            
-            <h2 className="text-2xl font-black text-red-500 uppercase tracking-tighter mb-4 relative z-10">CRITICAL WARNING</h2>
-            <p className="text-sm text-zinc-400 font-light mb-8 relative z-10">
-              You are about to permanently eradicate Order #{deleteModal.orderId} from the ledger. This action is irreversible.
-              <br/><br/>
-              To proceed, please type <span className="font-mono bg-zinc-900 px-2 py-0.5 rounded border border-white/10 text-white font-bold tracking-widest">delete</span> below.
-            </p>
 
-            <div className="flex items-center gap-2 mb-8 bg-black/50 p-2 rounded-xl border border-red-500/20 focus-within:border-red-500 transition-colors relative z-10">
+            <div className="mb-8 relative z-10">
               <input 
                 type="text" 
-                placeholder="Type here..." 
-                value={deleteInput} 
+                value={deleteInput}
                 onChange={(e) => setDeleteInput(e.target.value)}
-                className="flex-1 w-full bg-transparent text-white px-4 py-3 outline-none font-mono text-center tracking-widest text-sm"
+                placeholder="Type 'delete'..."
+                className="w-full bg-zinc-900 border border-white/10 focus:border-red-500/50 rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors"
               />
-              <button 
-                onClick={() => { copyToClipboard('delete'); alert('Copied to clipboard'); }}
-                className="px-4 py-3 bg-white/5 hover:bg-white/10 text-zinc-400 rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors flex items-center gap-2 shrink-0"
-              >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
-                Copy
-              </button>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-4 relative z-10">
-              <button onClick={() => setDeleteModal(null)} className="w-full sm:flex-1 py-4 bg-white/5 text-white rounded-xl font-black text-xs uppercase tracking-widest hover:bg-white/10 transition-colors border border-white/10">Abort</button>
+            <div className="flex gap-3 relative z-10">
+              <button 
+                onClick={() => setDeleteModal(null)} 
+                disabled={isDeleting} 
+                className="flex-1 px-4 py-3 bg-white/5 hover:bg-white/10 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border border-white/10 disabled:opacity-50"
+              >
+                Abort
+              </button>
               <button 
                 onClick={confirmDelete} 
                 disabled={isDeleting || deleteInput !== 'delete'} 
-                className="w-full sm:flex-1 py-4 bg-red-600 text-white rounded-xl font-black text-xs uppercase tracking-widest hover:bg-red-500 transition-colors disabled:opacity-30 disabled:cursor-not-allowed flex justify-center items-center shadow-[0_0_20px_rgba(220,38,38,0.4)]"
+                className="flex-1 px-4 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-[0_0_15px_rgba(239,68,68,0.3)] disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isDeleting ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span> : 'NUKE ORDER'}
+                {isDeleting ? 'Purging...' : 'Eradicate'}
               </button>
             </div>
           </div>
         </div>
       )}
+
     </div>
   );
 }
