@@ -19,7 +19,8 @@ type Product = {
   image: string;
   gallery?: string[]; 
   colors?: string[]; 
-  is_customizable?: boolean; 
+  // ✨ FIX: Matches the exact Supabase column we created
+  allow_custom_text?: boolean; 
 };
 
 type ChatMessage = {
@@ -46,7 +47,6 @@ export default function ProductDetails() {
   const [quantity, setQuantity] = useState(1);
   const [activeImage, setActiveImage] = useState<string>("");
   
-  // ✨ NEW: Cinematic Zoom State ✨
   const [isZoomed, setIsZoomed] = useState(false);
   
   const [selectedColor, setSelectedColor] = useState<string>("");
@@ -56,7 +56,6 @@ export default function ProductDetails() {
   const [reviewForm, setReviewForm] = useState({ name: '', rating: 5, comment: '' });
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   
-  // ✨ NEW: Expandable Review Form Toggle ✨
   const [isReviewFormOpen, setIsReviewFormOpen] = useState(false);
 
   const [isGeminiOpen, setIsGeminiOpen] = useState(false);
@@ -101,7 +100,6 @@ export default function ProductDetails() {
     geminiEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [geminiMessages, isGeminiTyping, isGeminiOpen]);
 
-  // Handle Escape key to close zoom
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setIsZoomed(false);
@@ -136,7 +134,7 @@ export default function ProductDetails() {
         product_id: product.id,
         user_name: reviewForm.name.trim() || 'Anonymous Client',
         rating: reviewForm.rating,
-        comment: reviewForm.comment.trim() // Make sure this matches your DB!
+        comment: reviewForm.comment.trim() 
       };
 
       const { error } = await supabase.from('reviews').insert([payload]);
@@ -145,7 +143,7 @@ export default function ProductDetails() {
       const newReview = { ...payload, id: Math.random(), created_at: new Date().toISOString() };
       setReviews([newReview, ...reviews]);
       setReviewForm({ name: '', rating: 5, comment: '' });
-      setIsReviewFormOpen(false); // Close form on success
+      setIsReviewFormOpen(false); 
       
     } catch (err) {
       console.error(err);
@@ -193,10 +191,12 @@ export default function ProductDetails() {
       setIsGeminiTyping(false);
     }
   };
-const handleGeminiSubmit = (e: React.FormEvent) => {
+
+  const handleGeminiSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     askGemini(geminiInput);
   };
+
   if (loading) {
     return (
       <div className="min-h-screen pt-32 px-6 max-w-7xl mx-auto flex flex-col lg:flex-row gap-12 animate-pulse relative z-10">
@@ -213,14 +213,15 @@ const handleGeminiSubmit = (e: React.FormEvent) => {
   const avgRating = totalReviews > 0 ? (reviews.reduce((sum, r) => sum + r.rating, 0) / totalReviews).toFixed(1) : (product.rating || 5.0).toFixed(1);
 
   const hasColors = product.colors && product.colors.length > 0;
-  const allowNotes = product.is_customizable || hasColors;
+  
+  // ✨ FIX: Looks at allow_custom_text from the database now ✨
+  const allowNotes = product.allow_custom_text || hasColors;
 
   return (
     <>
       <div className="fixed top-0 left-0 w-full h-screen -z-30 animate-live-bg opacity-40"></div>
       <div className="fixed inset-0 bg-gradient-to-b from-zinc-950/80 via-transparent to-zinc-950 -z-20"></div>
 
-      {/* ✨ NEW: FULLSCREEN ZOOM OVERLAY ✨ */}
       {isZoomed && (
         <div 
           className="fixed inset-0 z-[99999] bg-zinc-950/95 backdrop-blur-3xl flex items-center justify-center p-4 sm:p-10 cursor-zoom-out animate-fade-in"
@@ -233,7 +234,7 @@ const handleGeminiSubmit = (e: React.FormEvent) => {
             src={activeImage} 
             alt={product.name} 
             className="max-w-full max-h-full object-contain drop-shadow-[0_0_100px_rgba(255,255,255,0.1)] select-none"
-            onClick={(e) => e.stopPropagation()} // Prevent click on image from closing
+            onClick={(e) => e.stopPropagation()} 
           />
         </div>
       )}
@@ -306,7 +307,6 @@ const handleGeminiSubmit = (e: React.FormEvent) => {
 
         <div className="flex flex-col lg:flex-row gap-12 lg:gap-20 mb-32">
           
-          {/* ✨ UPGRADED: Dynamic Image Container ✨ */}
           <div className="w-full lg:w-1/2 flex flex-col gap-6">
             <button 
               onClick={() => setIsZoomed(true)}
@@ -314,7 +314,6 @@ const handleGeminiSubmit = (e: React.FormEvent) => {
               title="Click to Zoom"
             >
               <div className="absolute inset-0 bg-gradient-to-t from-purple-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"></div>
-              {/* h-auto lets the image dictate height natively up to max-h */}
               <img 
                 src={activeImage} 
                 alt={product.name} 
@@ -388,7 +387,8 @@ const handleGeminiSubmit = (e: React.FormEvent) => {
                   </div>
                 )}
 
-                {allowNotes && (
+                {/* ✨ FIX: We are now checking allow_custom_text! ✨ */}
+                {product.allow_custom_text && (
                   <div>
                     <div className="flex justify-between items-end mb-4">
                       <h3 className="text-sm font-bold text-white uppercase tracking-[0.2em]">Notes & Engraving</h3>
@@ -397,14 +397,14 @@ const handleGeminiSubmit = (e: React.FormEvent) => {
                     <div className="relative">
                       <input
                         type="text"
-                        maxLength={25}
+                        maxLength={100}
                         placeholder="Enter custom text or request..."
                         value={customText}
                         onChange={(e) => setCustomText(e.target.value)}
                         className="w-full bg-black/50 border border-white/10 text-white px-5 py-4 rounded-none focus:outline-none focus:border-purple-500 transition-colors font-light tracking-widest placeholder:text-zinc-700"
                       />
                       <span className="absolute right-5 top-1/2 -translate-y-1/2 text-xs text-zinc-600 font-bold tracking-widest">
-                        {25 - customText.length} Left
+                        {100 - customText.length} Left
                       </span>
                     </div>
                   </div>
@@ -531,7 +531,6 @@ const handleGeminiSubmit = (e: React.FormEvent) => {
         </div>
 
         {/* RELATED ASSETS */}
-    {/* RELATED ASSETS (DYNAMIC SCROLLER) */}
         <div className="border-t border-white/10 pt-20">
           <div className="mb-12 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
             <div>
@@ -539,14 +538,12 @@ const handleGeminiSubmit = (e: React.FormEvent) => {
               <p className="text-lg md:text-xl text-zinc-400 font-light tracking-wide">Curated additions for your collection.</p>
             </div>
             
-            {/* Visual cue for users to scroll */}
             <div className="hidden md:flex items-center gap-3 text-zinc-500 font-bold uppercase tracking-[0.2em] text-[10px]">
               Swipe to Explore
               <svg className="w-4 h-4 animate-bounce-x" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
             </div>
           </div>
           
-          {/* ✨ THE UPGRADED HORIZONTAL SCROLLER ✨ */}
           <div className="flex overflow-x-auto gap-6 pb-12 custom-scrollbar snap-x snap-mandatory hide-scrollbar">
             {recommendations.map((rec) => (
               <Link href={`/market/${rec.id}`} key={rec.id} className="shrink-0 w-[85vw] sm:w-[320px] lg:w-[400px] snap-start group relative aspect-[3/4] bg-zinc-900 overflow-hidden block rounded-2xl md:rounded-3xl border border-white/5">

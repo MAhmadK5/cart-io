@@ -278,10 +278,9 @@ const handleSaveProduct = async (e: React.FormEvent) => {
         image: productImages[0], 
         gallery: productImages, 
         colors: productForm.colors.length > 0 ? productForm.colors : null, 
-        allowCustomText: productForm.allowCustomText, 
+        allowCustomText: productForm.allow_custom_text, 
         rating: 5.0, 
         reviews: 0 
-        // ❌ aiMatch: 95 has been completely removed
       };
 
       if (editingId) {

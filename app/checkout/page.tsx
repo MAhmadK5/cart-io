@@ -32,8 +32,8 @@ export default function CheckoutPage() {
   const [promoError, setPromoError] = useState('');
   const [isApplyingPromo, setIsApplyingPromo] = useState(false);
 
-  // ✨ UPDATED: Complimentary shipping threshold raised to Rs. 3500 ✨
-  const shipping = cartItems.length > 0 ? (subtotal >= 3500 ? 0 : 300) : 0; 
+  // ✨ FIX: Flat shipping rate of Rs. 300 applied to all orders (Free shipping removed) ✨
+  const shipping = cartItems.length > 0 ? 300 : 0; 
   const total = Math.max(0, subtotal + shipping - discountAmount);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -483,7 +483,6 @@ export default function CheckoutPage() {
                 <h2 className="text-3xl font-black text-white mb-12 uppercase tracking-tighter border-b border-white/10 pb-8">Order Summary</h2>
                 
                 <div className="space-y-8 mb-12 max-h-96 overflow-y-auto custom-scrollbar pr-6">
-                  {/* ✨ FIX: Replaced key={item.id} with index to prevent duplicate key crashes ✨ */}
                   {cartItems.map((item, index) => (
                     <div key={`${item.id}-${index}`} className="flex items-start gap-8">
                       <div className="w-24 h-24 bg-black flex items-center justify-center flex-shrink-0 relative border border-white/5">

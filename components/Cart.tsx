@@ -7,10 +7,9 @@ export default function Cart() {
   const [isOpen, setIsOpen] = useState(false);
   const { cartItems, removeFromCart, updateQuantity, subtotal } = useCart();
 
-  // ✨ FREE SHIPPING THRESHOLD ✨
-  const FREE_SHIPPING_THRESHOLD = 3500;
-  const progress = Math.min((subtotal / FREE_SHIPPING_THRESHOLD) * 100, 100);
-  const amountLeft = FREE_SHIPPING_THRESHOLD - subtotal;
+  // ✨ FLAT SHIPPING LOGIC ✨
+  const shippingFee = cartItems.length > 0 ? 300 : 0;
+  const totalValue = subtotal + shippingFee;
 
   useEffect(() => {
     const handleOpenCart = (e: Event) => {
@@ -40,13 +39,12 @@ export default function Cart() {
     <div className={`fixed inset-0 z-[99999] ${isOpen ? 'visible pointer-events-auto' : 'invisible pointer-events-none'}`}>
       
       {/* ✨ TAPPABLE DARK BLUR BACKDROP ✨ */}
-      {/* Clicking this empty space on the left will close the drawer */}
       <div 
         className={`absolute inset-0 bg-black/70 backdrop-blur-sm transition-opacity duration-500 ${isOpen ? 'opacity-100' : 'opacity-0'}`}
         onClick={() => setIsOpen(false)}
       ></div>
 
-      {/* ✨ TRUE SIDE DRAWER (75vw on mobile for a sleek, compact profile) ✨ */}
+      {/* ✨ TRUE SIDE DRAWER ✨ */}
       <div className={`absolute top-0 right-0 w-[75vw] sm:w-[400px] lg:w-[450px] h-full bg-zinc-950/95 backdrop-blur-3xl border-l border-white/10 shadow-[-20px_0_50px_rgba(0,0,0,0.7)] flex flex-col transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${
         isOpen ? 'translate-x-0' : 'translate-x-full'
       }`}>
@@ -55,7 +53,7 @@ export default function Cart() {
         
         {/* HEADER */}
         <div className="flex flex-col p-4 sm:p-6 md:p-8 pt-6 md:pt-8 border-b border-white/10 shrink-0 relative z-10">
-          <div className="flex items-start justify-between mb-4 sm:mb-6">
+          <div className="flex items-start justify-between">
             <div>
               <p className="text-[9px] sm:text-[10px] text-purple-500 font-bold uppercase tracking-[0.4em] mb-1.5 flex items-center gap-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse"></span>
@@ -77,25 +75,6 @@ export default function Cart() {
               <svg className="w-4 h-4 sm:w-5 sm:h-5 pointer-events-none group-hover:rotate-90 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
           </div>
-
-          {/* ✨ GAMIFIED FREE SHIPPING BAR ✨ */}
-          {cartItems.length > 0 && (
-            <div className="w-full bg-black/40 border border-white/5 rounded-xl sm:rounded-2xl p-3 sm:p-4 relative overflow-hidden">
-              <div className="flex justify-between items-end mb-2">
-                <p className="text-[8px] sm:text-[10px] md:text-xs font-bold uppercase tracking-widest text-zinc-300 relative z-10">
-                  {progress >= 100 
-                    ? <span className="text-green-400 font-black flex items-center gap-1.5"><svg className="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path></svg> Free Shipping Unlocked</span> 
-                    : <span>You're <span className="text-purple-400 font-black">Rs. {amountLeft.toLocaleString()}</span> away from Free Shipping</span>}
-                </p>
-              </div>
-              <div className="w-full h-1 sm:h-1.5 bg-zinc-900 rounded-full overflow-hidden relative z-10">
-                <div 
-                  className={`h-full rounded-full transition-all duration-1000 ease-out ${progress >= 100 ? 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.8)]' : 'bg-purple-500 shadow-[0_0_10px_rgba(168,85,247,0.8)]'}`}
-                  style={{ width: `${progress}%` }}
-                ></div>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* CART ITEMS */}
@@ -121,7 +100,6 @@ export default function Cart() {
               
               return (
                 <div key={uniqueId} className="flex flex-row gap-3 bg-black/40 p-3 rounded-xl sm:rounded-2xl border border-white/5 group hover:border-white/20 hover:bg-white/5 transition-all">
-                  {/* ✨ SLIMMER IMAGE FOR MOBILE ✨ */}
                   <div className="w-16 h-16 sm:w-24 sm:h-24 bg-zinc-950 overflow-hidden relative border border-white/10 shrink-0 flex items-center justify-center rounded-lg sm:rounded-xl shadow-inner">
                     <img src={item.image} alt={item.name} className="absolute inset-0 w-full h-full object-contain p-2 opacity-90 group-hover:scale-110 transition-transform duration-500" />
                   </div>
@@ -156,7 +134,6 @@ export default function Cart() {
                     </div>
                     
                     <div className="flex items-end justify-between mt-2 sm:mt-3">
-                      {/* ✨ COMPACT QUANTITY CONTROLS ✨ */}
                       <div className="flex items-center bg-black border border-white/10 rounded-md sm:rounded-lg overflow-hidden shadow-inner">
                         <button 
                           onClick={() => updateQuantity(uniqueId, item.quantity - 1)} 
@@ -189,13 +166,11 @@ export default function Cart() {
               </div>
               <div className="flex justify-between text-[10px] sm:text-xs md:text-sm text-zinc-400 font-bold uppercase tracking-widest">
                 <span>Shipping</span>
-                <span className={`${progress >= 100 ? 'text-green-400' : 'text-purple-400'} font-black`}>
-                  {progress >= 100 ? 'FREE' : 'Calculated at Checkout'}
-                </span>
+                <span className="text-purple-400 font-black">Rs. {shippingFee.toLocaleString()}</span>
               </div>
               <div className="flex justify-between items-end pt-2 sm:pt-4 border-t border-white/10 mt-2 sm:mt-4">
                 <span className="text-[9px] sm:text-[10px] md:text-xs font-black text-zinc-500 uppercase tracking-[0.4em]">Total Value</span>
-                <span className="text-xl sm:text-2xl md:text-4xl font-black text-white tracking-tighter">Rs. {subtotal.toLocaleString()}</span>
+                <span className="text-xl sm:text-2xl md:text-4xl font-black text-white tracking-tighter">Rs. {totalValue.toLocaleString()}</span>
               </div>
             </div>
 
