@@ -221,7 +221,7 @@ export default function InventoryModule() {
       stock: String(product.stock), 
       description: product.description, 
       colors: product.colors || [], 
-      allowCustomText: product.allowCustomText || false
+      allowCustomText: product.allow_custom_text || false
     });
     setProductImages(product.gallery?.length ? product.gallery : (product.image ? [product.image] : []));
     setTempImageUrl('');
@@ -258,7 +258,7 @@ export default function InventoryModule() {
     setProductForm({ ...productForm, colors: productForm.colors.filter(c => c !== colorToRemove) });
   };
 
-const handleSaveProduct = async (e: React.FormEvent) => {
+  const handleSaveProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     if (productImages.length === 0) {
       alert("Please add at least one image to the gallery.");
@@ -278,7 +278,8 @@ const handleSaveProduct = async (e: React.FormEvent) => {
         image: productImages[0], 
         gallery: productImages, 
         colors: productForm.colors.length > 0 ? productForm.colors : null, 
-        allowCustomText: productForm.allow_custom_text, 
+        // ✨ FIX: Map database column to React state property ✨
+        allow_custom_text: productForm.allowCustomText, 
         rating: 5.0, 
         reviews: 0 
       };
