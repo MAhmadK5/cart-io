@@ -292,7 +292,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* --- CATEGORY OVERHAUL --- */}
+      {/* --- CATEGORY OVERHAUL --- 
       <div className="relative z-10 w-full px-4 sm:px-8 pb-20 pt-20 md:pb-32 md:pt-28 max-w-7xl mx-auto">
         <div className="mb-10 md:mb-16 text-center">
           <h2 className="text-3xl sm:text-5xl md:text-7xl font-black text-white tracking-tighter uppercase mb-4 md:mb-6">Cataloged Areas</h2>
@@ -347,6 +347,7 @@ export default function Home() {
 
         </div>
       </div>
+      */}
       {/* --- SALIENT FEATURES --- */}
       <div className="relative z-10 w-full bg-zinc-950 py-16 md:py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-8">

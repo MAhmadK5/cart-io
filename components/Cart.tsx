@@ -7,8 +7,12 @@ export default function Cart() {
   const [isOpen, setIsOpen] = useState(false);
   const { cartItems, removeFromCart, updateQuantity, subtotal } = useCart();
 
-  // ✨ FLAT SHIPPING LOGIC ✨
-  const shippingFee = cartItems.length > 0 ? 300 : 0;
+  // ✨ FREE SHIPPING THRESHOLD (Rs. 1000) ✨
+  const FREE_SHIPPING_THRESHOLD = 1000;
+  const progress = Math.min((subtotal / FREE_SHIPPING_THRESHOLD) * 100, 100);
+  const amountLeft = FREE_SHIPPING_THRESHOLD - subtotal;
+  
+  const shippingFee = cartItems.length > 0 ? (subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : 300) : 0;
   const totalValue = subtotal + shippingFee;
 
   useEffect(() => {
@@ -53,7 +57,7 @@ export default function Cart() {
         
         {/* HEADER */}
         <div className="flex flex-col p-4 sm:p-6 md:p-8 pt-6 md:pt-8 border-b border-white/10 shrink-0 relative z-10">
-          <div className="flex items-start justify-between">
+          <div className="flex items-start justify-between mb-4 sm:mb-6">
             <div>
               <p className="text-[9px] sm:text-[10px] text-purple-500 font-bold uppercase tracking-[0.4em] mb-1.5 flex items-center gap-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse"></span>
@@ -75,6 +79,25 @@ export default function Cart() {
               <svg className="w-4 h-4 sm:w-5 sm:h-5 pointer-events-none group-hover:rotate-90 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
           </div>
+
+          {/* ✨ GAMIFIED FREE SHIPPING BAR ✨ */}
+          {cartItems.length > 0 && (
+            <div className="w-full bg-black/40 border border-white/5 rounded-xl sm:rounded-2xl p-3 sm:p-4 relative overflow-hidden">
+              <div className="flex justify-between items-end mb-2">
+                <p className="text-[8px] sm:text-[10px] md:text-xs font-bold uppercase tracking-widest text-zinc-300 relative z-10">
+                  {progress >= 100 
+                    ? <span className="text-green-400 font-black flex items-center gap-1.5"><svg className="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path></svg> Free Shipping Unlocked</span> 
+                    : <span>You're <span className="text-purple-400 font-black">Rs. {amountLeft.toLocaleString()}</span> away from FREE Shipping</span>}
+                </p>
+              </div>
+              <div className="w-full h-1 sm:h-1.5 bg-zinc-900 rounded-full overflow-hidden relative z-10">
+                <div 
+                  className={`h-full rounded-full transition-all duration-1000 ease-out ${progress >= 100 ? 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.8)]' : 'bg-purple-500 shadow-[0_0_10px_rgba(168,85,247,0.8)]'}`}
+                  style={{ width: `${progress}%` }}
+                ></div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* CART ITEMS */}
@@ -166,7 +189,9 @@ export default function Cart() {
               </div>
               <div className="flex justify-between text-[10px] sm:text-xs md:text-sm text-zinc-400 font-bold uppercase tracking-widest">
                 <span>Shipping</span>
-                <span className="text-purple-400 font-black">Rs. {shippingFee.toLocaleString()}</span>
+                <span className={`${shippingFee === 0 ? 'text-green-400' : 'text-purple-400'} font-black`}>
+                  {shippingFee === 0 ? 'FREE' : `Rs. ${shippingFee.toLocaleString()}`}
+                </span>
               </div>
               <div className="flex justify-between items-end pt-2 sm:pt-4 border-t border-white/10 mt-2 sm:mt-4">
                 <span className="text-[9px] sm:text-[10px] md:text-xs font-black text-zinc-500 uppercase tracking-[0.4em]">Total Value</span>

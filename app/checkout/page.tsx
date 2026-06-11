@@ -25,15 +25,15 @@ export default function CheckoutPage() {
   const [orderSuccess, setOrderSuccess] = useState(false);
   const [completedOrder, setCompletedOrder] = useState<any>(null);
 
-  // ✨ NEW: DISCOUNT CODE STATES ✨
+  // ✨ DISCOUNT CODE STATES ✨
   const [promoCodeInput, setPromoCodeInput] = useState('');
   const [appliedPromo, setAppliedPromo] = useState<any>(null);
   const [discountAmount, setDiscountAmount] = useState(0);
   const [promoError, setPromoError] = useState('');
   const [isApplyingPromo, setIsApplyingPromo] = useState(false);
 
-  // ✨ FIX: Flat shipping rate of Rs. 300 applied to all orders (Free shipping removed) ✨
-  const shipping = cartItems.length > 0 ? 300 : 0; 
+  // ✨ FIX: Shipping is free for orders Rs. 1000 and above ✨
+  const shipping = cartItems.length > 0 ? (subtotal >= 1000 ? 0 : 300) : 0; 
   const total = Math.max(0, subtotal + shipping - discountAmount);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -108,7 +108,7 @@ export default function CheckoutPage() {
     );
   }
 
-  // ✨ THE NEW RELATIONAL CHECKOUT ENGINE ✨
+  // ✨ THE RELATIONAL CHECKOUT ENGINE ✨
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault(); 
     setIsProcessing(true);
@@ -264,7 +264,6 @@ export default function CheckoutPage() {
                 <div>
                   <h3 className="text-lg font-black text-zinc-500 uppercase tracking-[0.3em] mb-8 print:text-gray-500">Product Details</h3>
                   <div className="space-y-8">
-                    {/* ✨ FIX: Used index for key to prevent duplicate React ID warnings on receipt ✨ */}
                     {completedOrder.items.map((item: any, index: number) => (
                       <div key={index} className="flex justify-between items-center gap-6">
                         <div className="flex items-center gap-6">
